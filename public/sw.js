@@ -13,13 +13,16 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch — network first, cache fallback
+// Fetch — network first, cache fallback (only http/https)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (!e.request.url.startsWith('http')) return; // ignore chrome-extension://, etc
   e.respondWith(
     fetch(e.request).then(res => {
-      const clone = res.clone();
-      caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+      if (res.ok) {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+      }
       return res;
     }).catch(() => caches.match(e.request))
   );

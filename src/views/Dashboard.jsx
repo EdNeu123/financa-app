@@ -80,7 +80,7 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
             </div>
             <div><p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-[11px] sm:text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
           </div>
-          <div className="flex-1 hidden sm:block">
+          <div className="flex-1 min-w-[40px]">
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, ((gamification.xp || 0) - (level?.xpNeeded || 0)) / ((nextLevel?.xpNeeded || 100) - (level?.xpNeeded || 0)) * 100)}%`, background: level?.color || 'var(--accent)' }} />
             </div>

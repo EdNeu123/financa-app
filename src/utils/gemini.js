@@ -1,33 +1,47 @@
 /**
- * Gemini API client — mesmo padrão do mega-sena-mvc que funciona.
- * Usa systemInstruction separado + contents curto + gemini-2.0-flash.
+ * Gemini API client — padrão mega-sena-mvc.
+ * Cache em sessionStorage (sobrevive reload).
+ * systemInstruction separado + gemini-2.0-flash.
  */
 
 const MODEL = 'gemini-2.0-flash';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const CACHE_TTL = 30 * 60 * 1000; // 30 min
 
-// Cache em memória — 30 min
-const cache = new Map();
-const CACHE_TTL = 30 * 60 * 1000;
-
+// --- Cache via sessionStorage (persiste entre reloads) ---
 function getCached(key) {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(key); return null; }
-  return entry.data;
+  try {
+    const raw = sessionStorage.getItem('gemini_' + key);
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.ts > CACHE_TTL) { sessionStorage.removeItem('gemini_' + key); return null; }
+    return entry.data;
+  } catch { return null; }
 }
 
 function setCache(key, data) {
-  cache.set(key, { data, ts: Date.now() });
+  try {
+    sessionStorage.setItem('gemini_' + key, JSON.stringify({ data, ts: Date.now() }));
+  } catch {}
 }
 
-// Rate limiter — mín 6s entre chamadas + cooldown após 429
-let lastCall = 0;
-let cooldownUntil = 0;
+// --- Rate limiter via sessionStorage ---
+function getLastCall() {
+  return parseInt(sessionStorage.getItem('gemini_lastCall') || '0', 10);
+}
+function setLastCall() {
+  sessionStorage.setItem('gemini_lastCall', String(Date.now()));
+}
+function getCooldown() {
+  return parseInt(sessionStorage.getItem('gemini_cooldown') || '0', 10);
+}
+function setCooldown(until) {
+  sessionStorage.setItem('gemini_cooldown', String(until));
+}
 
 /**
- * Chamada principal — segue o padrão que funciona:
- * - systemInstruction separado do contents
+ * Chamada principal:
+ * - systemInstruction separado (igual mega-sena)
  * - contents com mensagem curta
  * - responseMimeType: application/json
  */
@@ -35,17 +49,18 @@ async function callGemini(systemPrompt, userMessage) {
   const key = import.meta.env.VITE_GEMINI_KEY;
   if (!key) return null;
 
-  // Cooldown check
+  // Cooldown check (persiste entre reloads)
+  const cooldownUntil = getCooldown();
   if (Date.now() < cooldownUntil) {
-    const remaining = cooldownUntil - Date.now();
-    throw new Error(`COOLDOWN:${Math.ceil(remaining / 1000)}`);
+    const remaining = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    throw new Error(`COOLDOWN:${remaining}`);
   }
 
-  // Rate limit — min 6s entre chamadas
-  const now = Date.now();
-  const wait = Math.max(0, 6000 - (now - lastCall));
+  // Rate limit — min 6s entre chamadas (persiste entre reloads)
+  const lastCall = getLastCall();
+  const wait = Math.max(0, 6000 - (Date.now() - lastCall));
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  lastCall = Date.now();
+  setLastCall();
 
   try {
     const res = await fetch(`${BASE}/${MODEL}:generateContent?key=${key}`, {
@@ -62,9 +77,10 @@ async function callGemini(systemPrompt, userMessage) {
     });
 
     if (res.status === 429) {
-      cooldownUntil = Date.now() + 60000;
-      console.warn('Rate limited. Cooldown 60s.');
-      return null;
+      // Cooldown 2 minutos — sobrevive reload
+      setCooldown(Date.now() + 120000);
+      console.warn('Rate limited. Cooldown 2min.');
+      throw new Error('COOLDOWN:120');
     }
 
     if (!res.ok) {
@@ -75,6 +91,7 @@ async function callGemini(systemPrompt, userMessage) {
     const data = await res.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
   } catch (e) {
+    if (e.message?.startsWith('COOLDOWN:')) throw e;
     console.error('Gemini fetch error:', e.message);
     return null;
   }
@@ -103,25 +120,18 @@ export async function analyzeStocks(stocks) {
   ).join('\n');
 
   const systemPrompt = `Você é um analista financeiro brasileiro especializado em B3.
-Retorne APENAS JSON com esta estrutura:
+Retorne APENAS JSON:
 {
   "analysis_date": "data de hoje",
-  "market_summary": "resumo do mercado em 1-2 frases",
+  "market_summary": "resumo em 1-2 frases",
   "picks": [
-    {
-      "ticker": "CÓDIGO",
-      "sentiment": "bullish" | "neutral" | "bearish",
-      "reason": "análise em 2-3 frases",
-      "risk": "baixo" | "médio" | "alto"
-    }
+    { "ticker": "CÓDIGO", "sentiment": "bullish" | "neutral" | "bearish", "reason": "análise em 2-3 frases", "risk": "baixo" | "médio" | "alto" }
   ]
 }
-Regras: selecione 5 ações mais relevantes, seja objetivo, considere cenário macro brasileiro, português do Brasil.`;
-
-  const userMessage = `Analise estas ações da B3 hoje:\n${stockData}`;
+Selecione 5 ações, seja objetivo, considere cenário macro brasileiro, português do Brasil.`;
 
   try {
-    const result = parseJSON(await callGemini(systemPrompt, userMessage));
+    const result = parseJSON(await callGemini(systemPrompt, `Ações da B3 hoje:\n${stockData}`));
     if (result) setCache(cacheKey, result);
     return result;
   } catch (e) {
@@ -134,27 +144,24 @@ Regras: selecione 5 ações mais relevantes, seja objetivo, considere cenário m
  * Analisa gastos do usuário.
  */
 export async function analyzeSpending(summary) {
-  const cacheKey = 'spending_' + JSON.stringify(summary).slice(0, 100);
+  const cacheKey = 'spending_' + JSON.stringify(summary).slice(0, 80);
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   const systemPrompt = `Você é um consultor financeiro pessoal brasileiro.
-Retorne APENAS JSON com esta estrutura:
+Retorne APENAS JSON:
 {
   "overall_health": "good" | "attention" | "critical",
   "score": 0-100,
   "summary": "avaliação em 2-3 frases",
   "tips": ["dica 1", "dica 2", "dica 3"],
-  "highlight": "o ponto mais importante para focar agora"
+  "highlight": "o ponto mais importante"
 }
 Seja prático e encorajador. Português do Brasil.`;
 
-  const userData = `Receita: R$ ${summary.income}
-Despesa: R$ ${summary.expense}
-Guardado: R$ ${summary.saved}
-Disponível: R$ ${summary.available}
-Top categorias: ${summary.topCategories?.map(c => `${c.name}: R$ ${c.value}`).join(', ') || 'Sem dados'}
-Tendências: ${summary.trends?.map(t => `${t.category}: ${t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '→'} ${t.change}%`).join(', ') || 'Sem dados'}`;
+  const userData = `Receita: R$${summary.income}, Despesa: R$${summary.expense}, Guardado: R$${summary.saved}, Disponível: R$${summary.available}
+Categorias: ${summary.topCategories?.map(c => `${c.name}: R$${c.value}`).join(', ') || 'Sem dados'}
+Tendências: ${summary.trends?.map(t => `${t.category} ${t.direction === 'up' ? '↑' : '↓'} ${t.change}%`).join(', ') || 'Sem dados'}`;
 
   try {
     const result = parseJSON(await callGemini(systemPrompt, userData));
