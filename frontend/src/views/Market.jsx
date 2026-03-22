@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { TrendingUp, TrendingDown, RefreshCw, ExternalLink, AlertTriangle, Globe, BarChart3, Zap, Info, X, Search, Brain, Calendar } from 'lucide-react';
-
-const TRACKED = ['PETR4','VALE3','ITUB4','BBDC4','ABEV3','WEGE3','BBAS3','RENT3','SUZB3','HAPV3'];
+import { apiGet, isBackendConfigured } from '../utils/api';
 
 const PICKS = [
   { ticker:'WEGE3', name:'WEG', reason:'Crescimento sólido em exportações industriais e margens acima da média do setor.', sentiment:'bullish', sector:'Industrial', basis:'Resultado trimestral positivo + expansão internacional + câmbio favorável' },
@@ -53,50 +52,15 @@ export default function Market({ userPlan }) {
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
-    const token = import.meta.env.VITE_BRAPI_TOKEN || '';
-    if (!token) { setError('As cotações em tempo real precisam ser configuradas pelo administrador. Consulte a documentação.'); setLoading(false); return; }
+    if (!isBackendConfigured()) { setError('Backend não configurado. Defina VITE_API_URL no .env.'); setLoading(false); return; }
     try {
-      // Fetch each stock individually (free tier = 1 per request)
-      const results = [];
-      for (const ticker of TRACKED) {
-        try {
-          const res = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${token}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.results?.[0]) {
-              const s = data.results[0];
-              results.push({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow });
-            }
-          }
-          // Small delay to respect rate limits
-          await new Promise(r => setTimeout(r, 300));
-        } catch {}
-      }
-      if (results.length > 0) setStocks(results);
-
-      // Fetch IBOV + historical
-      try {
-        await new Promise(r => setTimeout(r, 300));
-        const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}&range=1mo&interval=1d`);
-        if (ir.ok) {
-          const ib = await ir.json();
-          if (ib.results?.[0]) {
-            setIbov({ price: ib.results[0].regularMarketPrice, change: ib.results[0].regularMarketChangePercent });
-            // Extract historical prices
-            const hist = ib.results[0].historicalDataPrice;
-            if (hist?.length) {
-              setIbovHistory(hist.map(h => ({
-                date: new Date(h.date * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-                price: Math.round(h.close),
-              })));
-            }
-          }
-        }
-      } catch {}
-
-      if (results.length === 0) setError('Nenhuma cotação carregada. Verifique o token da API.');
+      const data = await apiGet('/api/stocks');
+      if (data.stocks?.length > 0) setStocks(data.stocks);
+      if (data.ibov) setIbov(data.ibov);
+      if (data.ibovHistory?.length > 0) setIbovHistory(data.ibovHistory);
+      if (data.stocks?.length === 0) setError('Nenhuma cotação carregada. Verifique o token no servidor.');
       else setLastUpdate(new Date());
-    } catch(e) { console.error(e); setError('Falha ao carregar cotações. Verifique seu token e conexão.'); }
+    } catch(e) { console.error(e); setError('Falha ao carregar cotações. Verifique se o backend está online.'); }
     setLoading(false);
   }, []);
 

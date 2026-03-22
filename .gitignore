@@ -1,7 +1,19 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.vercel/
+.firebase/
+
+# Environment
 .env
 .env.local
-.env.production
-*.log
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 .DS_Store

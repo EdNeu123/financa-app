@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, TrendingUp, Landmark, Shield, Target, Wallet, PiggyBank, BarChart3, ExternalLink, Play, Clock, Youtube, RefreshCw, AlertTriangle } from 'lucide-react';
+import { apiGet, isBackendConfigured } from '../utils/api';
 
 /* ── Artigos (links verificados via search) ── */
 const ARTICLES = [
@@ -17,14 +18,6 @@ const ARTICLES = [
 ];
 
 /* ── YouTube search queries ── */
-const YT_QUERIES = [
-  'como começar investir iniciante',
-  'renda fixa CDB tesouro direto',
-  'organizar finanças pessoais',
-  'reserva de emergência onde investir',
-  'fundos imobiliários para iniciantes',
-  'regra 50 30 20 salário',
-];
 
 const YT_CACHE_KEY = 'quanto_yt_cache';
 const YT_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 horas
@@ -37,37 +30,6 @@ function setCachedVideos(data) {
   try { sessionStorage.setItem(YT_CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch {}
 }
 
-async function fetchYouTubeVideos(apiKey) {
-  const cached = getCachedVideos();
-  if (cached) return cached;
-
-  const allVideos = [];
-  for (const q of YT_QUERIES) {
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=2&relevanceLanguage=pt&regionCode=BR&order=relevance&key=${apiKey}`;
-      const res = await fetch(url);
-      if (!res.ok) { if (res.status === 403) return []; continue; }
-      const data = await res.json();
-      if (data.items) {
-        data.items.forEach(item => {
-          if (!allVideos.find(v => v.id === item.id.videoId)) {
-            allVideos.push({
-              id: item.id.videoId,
-              title: item.snippet.title.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'"),
-              channel: item.snippet.channelTitle,
-              thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
-              date: item.snippet.publishedAt,
-              url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-            });
-          }
-        });
-      }
-    } catch (e) { console.warn('YT search error:', e); }
-  }
-  if (allVideos.length > 0) setCachedVideos(allVideos);
-  return allVideos;
-}
-
 export default function Education() {
   const [cat, setCat] = useState('Todos');
   const [tab, setTab] = useState('articles');
@@ -75,20 +37,33 @@ export default function Education() {
   const [ytLoading, setYtLoading] = useState(false);
   const [ytError, setYtError] = useState('');
   const filtered = cat === 'Todos' ? ARTICLES : ARTICLES.filter(a => a.cat === cat);
-  const ytKey = import.meta.env.VITE_YOUTUBE_KEY || import.meta.env.VITE_GEMINI_KEY;
 
   const loadVideos = async () => {
-    if (!ytKey) { setYtError('Configure VITE_YOUTUBE_KEY no .env (mesmo console do Google Cloud, ative "YouTube Data API v3").'); return; }
+    if (!isBackendConfigured()) { setYtError('Backend não configurado. Defina VITE_API_URL no .env.'); return; }
     setYtLoading(true); setYtError('');
-    // Limpa cache para forçar novas sugestões
     try { sessionStorage.removeItem(YT_CACHE_KEY); } catch {}
-    const result = await fetchYouTubeVideos(ytKey);
-    if (result.length > 0) setVideos(result);
-    else setYtError('Não foi possível carregar vídeos. Verifique se a YouTube Data API v3 está ativada no seu Google Cloud Console.');
+    try {
+      const data = await apiGet('/api/youtube');
+      if (data.videos?.length > 0) {
+        // Decode HTML entities
+        const cleaned = data.videos.map(v => ({
+          ...v,
+          title: v.title?.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'") || v.title,
+          date: v.publishedAt,
+        }));
+        setVideos(cleaned);
+        setCachedVideos(cleaned);
+      } else {
+        setYtError('Nenhum vídeo encontrado. Verifique se YOUTUBE_KEY está configurada no backend.');
+      }
+    } catch (e) {
+      console.error('YouTube error:', e);
+      setYtError('Falha ao carregar vídeos. Verifique se o backend está online.');
+    }
     setYtLoading(false);
   };
 
-  // Carrega do cache silenciosamente ao abrir a aba, sem chamar a API
+  // Carrega do cache silenciosamente ao abrir a aba
   useEffect(() => {
     if (tab === 'videos' && videos.length === 0) {
       const cached = getCachedVideos();
