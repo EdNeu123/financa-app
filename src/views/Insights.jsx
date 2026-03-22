@@ -57,8 +57,9 @@ export default function Insights({ transactions, budgets, categories }) {
     const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({ name, value: Math.round(value) }));
 
     const result = await analyzeSpending({ income: Math.round(income), expense: Math.round(expense), saved: Math.round(saved), available: Math.round(income - expense - saved), topCategories: topCats, trends: trends.slice(0, 5) });
-    if (result) { setAiInsight(result); setAiError(''); }
-    else setAiError('Não foi possível analisar agora. Aguarde alguns segundos e tente novamente.');
+    if (result?.error && result.cooldown) { setAiError(`Limite de requisições atingido. Tente novamente em ${result.cooldown}s.`); }
+    else if (result) { setAiInsight(result); setAiError(''); }
+    else setAiError('Não foi possível analisar agora. Aguarde 1 minuto e tente novamente.');
     setAiLoading(false);
   };
 

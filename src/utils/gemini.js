@@ -1,13 +1,14 @@
 /**
  * Gemini API client com cache, rate limiting e retry.
+ * Usa gemini-2.0-flash-lite (30 RPM free tier vs 15 do flash).
  */
 
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-2.0-flash-lite';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Cache em memória — evita chamadas repetidas
 const cache = new Map();
-const CACHE_TTL = 10 * 60 * 1000; // 10 min
+const CACHE_TTL = 30 * 60 * 1000; // 30 min
 
 function getCached(key) {
   const entry = cache.get(key);
@@ -20,17 +21,24 @@ function setCache(key, data) {
   cache.set(key, { data, ts: Date.now() });
 }
 
-// Rate limiter — mín 4s entre chamadas
+// Rate limiter — mín 10s entre chamadas + cooldown após 429
 let lastCall = 0;
+let cooldownUntil = 0;
+
 async function waitForSlot() {
+  // Se em cooldown por 429, espera
+  if (Date.now() < cooldownUntil) {
+    const remaining = cooldownUntil - Date.now();
+    throw new Error(`COOLDOWN:${Math.ceil(remaining / 1000)}`);
+  }
   const now = Date.now();
-  const wait = Math.max(0, 4000 - (now - lastCall));
+  const wait = Math.max(0, 10000 - (now - lastCall));
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
   lastCall = Date.now();
 }
 
 // Retry com backoff em caso de 429
-async function callGemini(prompt, retries = 2) {
+async function callGemini(prompt, retries = 1) {
   const key = import.meta.env.VITE_GEMINI_KEY;
   if (!key) return null;
 
@@ -48,10 +56,10 @@ async function callGemini(prompt, retries = 2) {
       });
 
       if (res.status === 429) {
-        const backoff = Math.pow(2, attempt + 1) * 2000; // 4s, 8s, 16s
-        console.warn(`Rate limited, retrying in ${backoff / 1000}s...`);
-        await new Promise(r => setTimeout(r, backoff));
-        continue;
+        // Set 60s cooldown — stop hammering the API
+        cooldownUntil = Date.now() + 60000;
+        console.warn('Rate limited. Cooldown 60s.');
+        return null;
       }
 
       if (!res.ok) {
@@ -119,9 +127,14 @@ Regras:
 - Considere o cenário macro brasileiro atual
 - Responda em português do Brasil`;
 
-  const result = parseJSON(await callGemini(prompt));
-  if (result) setCache(cacheKey, result);
-  return result;
+  try {
+    const result = parseJSON(await callGemini(prompt));
+    if (result) setCache(cacheKey, result);
+    return result;
+  } catch (e) {
+    if (e.message?.startsWith('COOLDOWN:')) return { error: true, cooldown: parseInt(e.message.split(':')[1]) };
+    return null;
+  }
 }
 
 /**
@@ -156,9 +169,14 @@ Retorne JSON:
 
 Seja prático e encorajador. Português do Brasil.`;
 
-  const result = parseJSON(await callGemini(prompt));
-  if (result) setCache(cacheKey, result);
-  return result;
+  try {
+    const result = parseJSON(await callGemini(prompt));
+    if (result) setCache(cacheKey, result);
+    return result;
+  } catch (e) {
+    if (e.message?.startsWith('COOLDOWN:')) return { error: true, cooldown: parseInt(e.message.split(':')[1]) };
+    return null;
+  }
 }
 
 export function isGeminiConfigured() {

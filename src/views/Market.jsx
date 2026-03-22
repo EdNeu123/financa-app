@@ -41,7 +41,11 @@ export default function Market({ userPlan }) {
     if (!hasGemini || !stockData?.length) return;
     setAiLoading(true);
     const result = await analyzeStocks(stockData);
-    if (result) setAiPicks(result);
+    if (result?.error && result.cooldown) {
+      setAiPicks({ market_summary: `Limite atingido. Tente novamente em ${result.cooldown}s.`, picks: [] });
+    } else if (result && !result.error) {
+      setAiPicks(result);
+    }
     setAiLoading(false);
   };
 
