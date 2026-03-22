@@ -116,7 +116,7 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
 
       <main className="flex-1 lg:ml-[240px]">
         <div className="lg:hidden sticky top-0 z-20 backdrop-blur-xl border-b px-4 py-3 flex items-center gap-3"
-          style={{ background: theme === 'dark' ? 'rgba(11,15,25,0.8)' : 'rgba(255,255,255,0.8)', borderColor: 'var(--border)' }}>
+          style={{ background: theme === 'dark' ? 'rgba(28,28,30,0.85)' : 'rgba(245,245,247,0.85)', borderColor: 'var(--border)' }}>
           <button onClick={() => setOpen(true)} className="p-2 rounded-xl" style={{ color: 'var(--text-primary)' }}>
             <Menu className="w-5 h-5" />
           </button>
