@@ -1,79 +1,103 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Play, ExternalLink, Clock, Star, TrendingUp, Shield, PiggyBank, Landmark, BarChart3, Wallet, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, Landmark, Shield, Target, Wallet, PiggyBank, BarChart3, ExternalLink, Play, Clock, Filter } from 'lucide-react';
 
 const ARTICLES = [
-  { id: 1, title: 'Reserva de emergência: quanto guardar e onde investir', category: 'Fundamentos', readTime: 8, icon: Shield, color: '#10b981', url: 'https://www.infomoney.com.br/guias/reserva-de-emergencia/' },
-  { id: 2, title: 'Regra 50-30-20: como dividir seu salário', category: 'Orçamento', readTime: 5, icon: Wallet, color: '#3b82f6', url: 'https://www.serasa.com.br/ensina/dicas/regra-50-30-20/' },
-  { id: 3, title: 'Como começar a investir com pouco dinheiro', category: 'Investimentos', readTime: 10, icon: TrendingUp, color: '#8b5cf6', url: 'https://www.b3.com.br/pt_br/educacao/' },
-  { id: 4, title: 'CDB, LCI, LCA: entenda a renda fixa', category: 'Renda Fixa', readTime: 12, icon: Landmark, color: '#06b6d4', url: 'https://www.b3.com.br/pt_br/educacao/cursos/renda-fixa/' },
-  { id: 5, title: 'Tesouro Direto: guia completo para iniciantes', category: 'Renda Fixa', readTime: 15, icon: Shield, color: '#14b8a6', url: 'https://www.tesourodireto.com.br/conheca/conheca-o-tesouro-direto.htm' },
-  { id: 6, title: 'Como sair das dívidas: passo a passo prático', category: 'Fundamentos', readTime: 7, icon: Target, color: '#ef4444', url: 'https://www.serasa.com.br/limpa-nome-online/' },
-  { id: 7, title: 'ETFs: o que são e como investir', category: 'Investimentos', readTime: 10, icon: BarChart3, color: '#6366f1', url: 'https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/etf/' },
-  { id: 8, title: 'Juros compostos: o poder dos rendimentos', category: 'Fundamentos', readTime: 6, icon: TrendingUp, color: '#22c55e', url: 'https://www.bcb.gov.br/cidadaniafinanceira' },
-  { id: 9, title: 'FIIs: como investir em fundos imobiliários', category: 'Investimentos', readTime: 14, icon: PiggyBank, color: '#f97316', url: 'https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/fundos-de-investimento-imobiliario-fii.htm' },
-  { id: 10, title: 'Planejamento financeiro pessoal: por onde começar', category: 'Fundamentos', readTime: 8, icon: Wallet, color: '#ec4899', url: 'https://www.bcb.gov.br/cidadaniafinanceira/educacaofinanceira' },
+  { id:1, title:'Reserva de emergência: quanto guardar e onde investir', cat:'Fundamentos', time:'5 min', icon:Shield, color:'#10b981',
+    url:'https://conteudos.xpi.com.br/aprenda-a-investir/relatorios/guia-do-investidor-iniciante/' },
+  { id:2, title:'Como começar a investir do zero', cat:'Fundamentos', time:'8 min', icon:TrendingUp, color:'#3b82f6',
+    url:'https://conteudos.xpi.com.br/aprenda-a-investir/trilhas/como-comecar-a-investir/' },
+  { id:3, title:'Regra 50-30-20: divida seu salário de forma inteligente', cat:'Orçamento', time:'4 min', icon:Wallet, color:'#8b5cf6',
+    url:'https://www.serasa.com.br/ensina/dicas/regra-50-30-20/' },
+  { id:4, title:'CDB, LCI, LCA: entenda os títulos de renda fixa', cat:'Renda Fixa', time:'10 min', icon:Landmark, color:'#06b6d4',
+    url:'https://conteudos.xpi.com.br/renda-fixa/' },
+  { id:5, title:'Tesouro Direto: como funciona e como investir', cat:'Renda Fixa', time:'8 min', icon:Shield, color:'#14b8a6',
+    url:'https://www.tesourodireto.com.br/conheca/conheca-o-tesouro-direto.htm' },
+  { id:6, title:'9 investimentos para iniciantes', cat:'Investimentos', time:'12 min', icon:BarChart3, color:'#6366f1',
+    url:'https://conteudos.xpi.com.br/aprenda-a-investir/relatorios/investimento-para-iniciantes/' },
+  { id:7, title:'Fundos imobiliários (FIIs): o que são e como investir', cat:'Investimentos', time:'10 min', icon:PiggyBank, color:'#f97316',
+    url:'https://conteudos.xpi.com.br/aprenda-a-investir/relatorios/fundos-imobiliarios/' },
+  { id:8, title:'Como sair das dívidas e limpar o nome', cat:'Fundamentos', time:'6 min', icon:Target, color:'#ef4444',
+    url:'https://www.serasa.com.br/limpa-nome-online/' },
+  { id:9, title:'Renda fixa na XP: guia completo', cat:'Renda Fixa', time:'10 min', icon:Landmark, color:'#0d9488',
+    url:'https://www.xpi.com.br/produtos/renda-fixa/' },
+  { id:10, title:'Educação financeira — Banco Central do Brasil', cat:'Fundamentos', time:'5 min', icon:Wallet, color:'#ec4899',
+    url:'https://www.bcb.gov.br/cidadaniafinanceira' },
 ];
 
 const VIDEOS = [
-  { id: 1, title: 'Como investir em 2025 — Guia Completo', channel: 'Me Poupe!', duration: '18:42', thumbnail: 'https://img.youtube.com/vi/TO_CIe0xbwQ/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=TO_CIe0xbwQ' },
-  { id: 2, title: 'Renda Fixa vs Renda Variável', channel: 'Primo Rico', duration: '22:15', thumbnail: 'https://img.youtube.com/vi/fGnOQC96e1U/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=fGnOQC96e1U' },
-  { id: 3, title: 'Como funciona a Bolsa de Valores', channel: 'Investidor Sardinha', duration: '15:30', thumbnail: 'https://img.youtube.com/vi/4EMfy10OByA/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=4EMfy10OByA' },
-  { id: 4, title: 'Tesouro Direto para iniciantes', channel: 'Nathalia Arcuri', duration: '20:10', thumbnail: 'https://img.youtube.com/vi/PIBME76JdQc/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=PIBME76JdQc' },
-  { id: 5, title: 'Organize suas finanças em 7 dias', channel: 'Eitonilda', duration: '12:45', thumbnail: 'https://img.youtube.com/vi/R36FC7qoVKc/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=R36FC7qoVKc' },
-  { id: 6, title: 'FIIs que pagam dividendos todo mês', channel: 'Primo Rico', duration: '25:00', thumbnail: 'https://img.youtube.com/vi/bM1k4YWsQsA/mqdefault.jpg', url: 'https://www.youtube.com/watch?v=bM1k4YWsQsA' },
+  { id:1, title:'Guia BÁSICO para investir com POUCO dinheiro', channel:'Primo Rico', dur:'18:42',
+    vid:'dJyJ77GkhBE' },
+  { id:2, title:'Como ORGANIZAR a vida financeira do ZERO', channel:'Me Poupe!', dur:'15:30',
+    vid:'HnFBbuyascE' },
+  { id:3, title:'RENDA FIXA: como escolher o melhor investimento', channel:'Primo Rico', dur:'20:11',
+    vid:'MOlG_ruLbLg' },
+  { id:4, title:'Tesouro Direto para INICIANTES — passo a passo', channel:'O Primo Rico', dur:'16:45',
+    vid:'N8R3GwMgGaM' },
+  { id:5, title:'Como montar uma CARTEIRA DE INVESTIMENTOS', channel:'Primo Rico', dur:'22:33',
+    vid:'EevGexB_bzI' },
+  { id:6, title:'RESERVA DE EMERGÊNCIA: onde investir?', channel:'Primo Rico', dur:'14:18',
+    vid:'N1SLr4FgB8Y' },
 ];
 
-const CATEGORIES = ['Todos', 'Fundamentos', 'Orçamento', 'Investimentos', 'Renda Fixa'];
+const CATS = ['Todos', 'Fundamentos', 'Orçamento', 'Renda Fixa', 'Investimentos'];
 
 export default function Education() {
+  const [cat, setCat] = useState('Todos');
   const [tab, setTab] = useState('articles');
-  const [filter, setFilter] = useState('Todos');
-  const filtered = filter === 'Todos' ? ARTICLES : ARTICLES.filter(a => a.category === filter);
+  const filtered = cat === 'Todos' ? ARTICLES : ARTICLES.filter(a => a.cat === cat);
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Aprender</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Artigos, vídeos e conteúdos sobre finanças pessoais e investimentos</p></div>
+      <div>
+        <h1 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Aprender</h1>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Artigos e vídeos para dominar suas finanças</p>
+      </div>
 
+      {/* Tabs */}
       <div className="flex gap-2">
-        {[{ id: 'articles', l: 'Artigos', icon: BookOpen }, { id: 'videos', l: 'Vídeos', icon: Play }].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+        {[{ id: 'articles', label: 'Artigos', icon: BookOpen }, { id: 'videos', label: 'Vídeos', icon: Play }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
             style={{ background: tab === t.id ? 'var(--accent-light)' : 'var(--bg-secondary)', color: tab === t.id ? 'var(--accent)' : 'var(--text-secondary)', border: `1px solid ${tab === t.id ? 'var(--accent)' : 'var(--border)'}` }}>
-            <t.icon className="w-4 h-4" />{t.l}
+            <t.icon className="w-3.5 h-3.5" />{t.label}
           </button>
         ))}
       </div>
 
       {tab === 'articles' && (
         <>
+          {/* Category filter */}
           <div className="flex gap-2 flex-wrap">
-            {CATEGORIES.map(c => (
-              <button key={c} onClick={() => setFilter(c)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{ background: filter === c ? 'var(--accent-light)' : 'var(--bg-tertiary)', color: filter === c ? 'var(--accent)' : 'var(--text-muted)' }}>{c}</button>
+            {CATS.map(c => (
+              <button key={c} onClick={() => setCat(c)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{ background: cat === c ? 'var(--accent-light)' : 'var(--bg-tertiary)', color: cat === c ? 'var(--accent)' : 'var(--text-muted)' }}>
+                {c}
+              </button>
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((a, i) => {
-              const Icon = a.icon;
-              return (
-                <motion.a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="card p-5 flex gap-4 group cursor-pointer hover:shadow-lg transition-all">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: a.color + '15' }}>
-                    <Icon className="w-5 h-5" style={{ color: a.color }} />
+
+          {/* Articles grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map((a, i) => (
+              <motion.a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                className="card p-4 flex items-start gap-3.5 group cursor-pointer">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: a.color + '12' }}>
+                  <a.icon className="w-4.5 h-4.5" style={{ color: a.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium leading-snug group-hover:underline" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>{a.cat}</span>
+                    <span className="text-[11px] flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Clock className="w-3 h-3" />{a.time}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold leading-tight mb-1.5 group-hover:underline" style={{ color: 'var(--text-primary)' }}>{a.title}</p>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>{a.category}</span>
-                      <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Clock className="w-3 h-3" />{a.readTime} min</span>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }} />
-                </motion.a>
-              );
-            })}
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-1" style={{ color: 'var(--text-muted)' }} />
+              </motion.a>
+            ))}
           </div>
         </>
       )}
@@ -81,20 +105,24 @@ export default function Education() {
       {tab === 'videos' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {VIDEOS.map((v, i) => (
-            <motion.a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-              className="card overflow-hidden group cursor-pointer hover:shadow-lg transition-all">
+            <motion.a key={v.id} href={`https://www.youtube.com/watch?v=${v.vid}`} target="_blank" rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="card overflow-hidden group cursor-pointer">
+              {/* Thumbnail */}
               <div className="relative aspect-video overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
-                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={e => { e.target.style.display = 'none'; }} />
+                <img src={`https://img.youtube.com/vi/${v.vid}/mqdefault.jpg`} alt={v.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
-                  <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center"><Play className="w-5 h-5 text-gray-900 ml-0.5" /></div>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 shadow-lg">
+                    <Play className="w-5 h-5 text-red-600 ml-0.5" fill="currentColor" />
+                  </div>
                 </div>
-                <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[11px] font-mono bg-black/70 text-white">{v.duration}</div>
+                <span className="absolute bottom-2 right-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/70 text-white">{v.dur}</span>
               </div>
-              <div className="p-4">
-                <p className="text-sm font-semibold leading-tight mb-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>{v.title}</p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{v.channel}</p>
+              <div className="p-3.5">
+                <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>{v.title}</p>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{v.channel}</p>
               </div>
             </motion.a>
           ))}
