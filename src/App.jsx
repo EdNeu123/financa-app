@@ -128,7 +128,7 @@ export default function App() {
     dashboard: <Dashboard transactions={transactions} categories={categories} goals={goals} />,
     transactions: (
       <Transactions
-        transactions={transactions} categories={categories}
+        transactions={transactions} categories={categories} goals={goals}
         onAdd={handleAddTransaction} onUpdate={handleUpdateTransaction} onDelete={handleDeleteTransaction}
       />
     ),

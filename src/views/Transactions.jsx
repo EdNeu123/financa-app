@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, X, Trash2, Pencil } from 'lucide-react';
+import { Plus, Search, X, Trash2, Pencil, Target } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { TAG_SUGGESTIONS } from '../utils/constants';
 import { LIMITS } from '../utils/validators';
@@ -10,7 +10,7 @@ import { LIMITS } from '../utils/validators';
  * A View NÃO valida — apenas coleta dados e repassa via onSave.
  * O controller retorna { success, error } e a view exibe o erro.
  */
-function TransactionModal({ isOpen, onClose, onSave, editData, categories }) {
+function TransactionModal({ isOpen, onClose, onSave, editData, categories, goals }) {
   const [form, setForm] = useState(() => editData || {
     type: 'expense',
     description: '',
@@ -19,6 +19,7 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories }) {
     date: new Date().toISOString().split('T')[0],
     tags: [],
     notes: '',
+    goalId: null,
   });
   const [tagInput, setTagInput] = useState('');
   const [error, setError] = useState('');
@@ -77,7 +78,7 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories }) {
             <div className="flex gap-2 p-1 bg-surface-3 rounded-xl">
               {['expense', 'income'].map(t => (
                 <button key={t} type="button"
-                  onClick={() => setForm(f => ({ ...f, type: t, category: '' }))}
+                  onClick={() => setForm(f => ({ ...f, type: t, category: '', goalId: t === 'expense' ? null : f.goalId }))}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all
                     ${form.type === t
                       ? t === 'expense' ? 'bg-danger-500/20 text-danger-400' : 'bg-brand-500/20 text-brand-400'
@@ -133,6 +134,37 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories }) {
                 ))}
               </div>
             </div>
+
+            {/* Goal selector — only for income */}
+            {form.type === 'income' && goals.length > 0 && (
+              <div>
+                <label className="text-xs text-gray-400 mb-1.5 block flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5" /> Vincular a uma meta (opcional)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <button type="button"
+                    onClick={() => setForm(f => ({ ...f, goalId: null }))}
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all
+                      ${!form.goalId
+                        ? 'border-brand-500/50 bg-brand-500/10 text-white'
+                        : 'border-white/5 bg-surface-3/50 text-gray-400 hover:border-white/15'}`}>
+                    <span className="text-lg">—</span>
+                    <span>Nenhuma</span>
+                  </button>
+                  {goals.map(g => (
+                    <button key={g.id} type="button"
+                      onClick={() => setForm(f => ({ ...f, goalId: g.id }))}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all
+                        ${form.goalId === g.id
+                          ? 'border-brand-500/50 bg-brand-500/10 text-white'
+                          : 'border-white/5 bg-surface-3/50 text-gray-400 hover:border-white/15'}`}>
+                      <span className="text-lg">{g.icon}</span>
+                      <span className="truncate">{g.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tags */}
             <div>
@@ -192,7 +224,7 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories }) {
   );
 }
 
-export default function Transactions({ transactions, categories, onAdd, onUpdate, onDelete }) {
+export default function Transactions({ transactions, categories, goals, onAdd, onUpdate, onDelete }) {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [search, setSearch] = useState('');
@@ -267,6 +299,7 @@ export default function Transactions({ transactions, categories, onAdd, onUpdate
             </motion.div>
           ) : filtered.map((tx, i) => {
             const cat = categories.find(c => c.name === tx.category);
+            const linkedGoal = tx.goalId ? goals.find(g => g.id === tx.goalId) : null;
             return (
               <motion.div key={tx.id} layout
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}
@@ -279,6 +312,11 @@ export default function Transactions({ transactions, categories, onAdd, onUpdate
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">{tx.description}</p>
+                    {linkedGoal && (
+                      <span className="tag-pill bg-brand-500/10 text-brand-400 border-brand-500/20 text-[10px]">
+                        {linkedGoal.icon} {linkedGoal.name}
+                      </span>
+                    )}
                     {tx.tags?.length > 0 && (
                       <div className="hidden sm:flex gap-1">
                         {tx.tags.slice(0, 2).map(tag => (
@@ -315,6 +353,7 @@ export default function Transactions({ transactions, categories, onAdd, onUpdate
         onSave={handleSave}
         editData={editItem}
         categories={categories}
+        goals={goals || []}
       />
     </div>
   );
