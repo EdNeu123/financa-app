@@ -1,53 +1,95 @@
 /**
- * Gemini API client — análise de ações com IA.
- * Usa gemini-2.0-flash (rápido, dentro do free tier).
+ * Gemini API client com cache, rate limiting e retry.
  */
 
 const MODEL = 'gemini-2.0-flash';
-const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-/**
- * Chama a Gemini API com um prompt.
- * Retorna o texto da resposta ou null em caso de erro.
- */
-async function callGemini(prompt) {
+// Cache em memória — evita chamadas repetidas
+const cache = new Map();
+const CACHE_TTL = 10 * 60 * 1000; // 10 min
+
+function getCached(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(key); return null; }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  cache.set(key, { data, ts: Date.now() });
+}
+
+// Rate limiter — mín 4s entre chamadas
+let lastCall = 0;
+async function waitForSlot() {
+  const now = Date.now();
+  const wait = Math.max(0, 4000 - (now - lastCall));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastCall = Date.now();
+}
+
+// Retry com backoff em caso de 429
+async function callGemini(prompt, retries = 2) {
   const key = import.meta.env.VITE_GEMINI_KEY;
   if (!key) return null;
 
-  try {
-    const res = await fetch(`${BASE_URL}/${MODEL}:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024,
-          responseMimeType: 'application/json',
-        },
-      }),
-    });
+  await waitForSlot();
 
-    if (!res.ok) {
-      console.error('Gemini API error:', res.status);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${BASE}/${MODEL}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1024, responseMimeType: 'application/json' },
+        }),
+      });
+
+      if (res.status === 429) {
+        const backoff = Math.pow(2, attempt + 1) * 2000; // 4s, 8s, 16s
+        console.warn(`Rate limited, retrying in ${backoff / 1000}s...`);
+        await new Promise(r => setTimeout(r, backoff));
+        continue;
+      }
+
+      if (!res.ok) {
+        console.error('API error:', res.status);
+        return null;
+      }
+
+      const data = await res.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    } catch (e) {
+      console.error('Fetch error:', e.message);
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
       return null;
     }
-
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return text || null;
-  } catch (e) {
-    console.error('Gemini fetch error:', e);
-    return null;
   }
+  return null;
+}
+
+function parseJSON(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch {}
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  return null;
 }
 
 /**
- * Gera análise de ações baseada em dados reais de cotação.
- * Recebe array de stocks da brapi.dev e retorna sugestões.
+ * Analisa ações com dados reais de cotação.
  */
 export async function analyzeStocks(stocks) {
   if (!stocks?.length) return null;
+
+  const cacheKey = 'stocks_' + stocks.map(s => s.ticker).join(',');
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
 
   const stockData = stocks.map(s =>
     `${s.ticker}: R$${Number(s.price).toFixed(2)} (${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%)`
@@ -57,7 +99,7 @@ export async function analyzeStocks(stocks) {
 
 ${stockData}
 
-Retorne um JSON com esta estrutura (sem markdown, só o JSON puro):
+Retorne um JSON com esta estrutura (sem markdown, só JSON):
 {
   "analysis_date": "data de hoje",
   "market_summary": "resumo do mercado em 1-2 frases",
@@ -72,32 +114,25 @@ Retorne um JSON com esta estrutura (sem markdown, só o JSON puro):
 }
 
 Regras:
-- Selecione as 5 ações mais relevantes para análise
-- Seja objetivo e baseado em dados, não especulativo
-- Considere o cenário macro brasileiro atual (Selic alta, fiscal em debate)
-- Inclua disclaimer que não é recomendação de investimento
+- Selecione as 5 ações mais relevantes
+- Seja objetivo e baseado em dados
+- Considere o cenário macro brasileiro atual
 - Responda em português do Brasil`;
 
-  const raw = await callGemini(prompt);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    // Tenta extrair JSON se veio com markdown
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (match) {
-      try { return JSON.parse(match[0]); } catch {}
-    }
-    return null;
-  }
+  const result = parseJSON(await callGemini(prompt));
+  if (result) setCache(cacheKey, result);
+  return result;
 }
 
 /**
- * Gera insights personalizados sobre os gastos do usuário.
+ * Analisa gastos do usuário.
  */
 export async function analyzeSpending(summary) {
-  const prompt = `Você é um consultor financeiro pessoal brasileiro. Analise estes dados financeiros:
+  const cacheKey = 'spending_' + JSON.stringify(summary).slice(0, 100);
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const prompt = `Você é um consultor financeiro pessoal brasileiro. Analise estes dados:
 
 Receita mensal: R$ ${summary.income}
 Despesa mensal: R$ ${summary.expense}
@@ -107,33 +142,25 @@ Disponível: R$ ${summary.available}
 Top categorias de gasto:
 ${summary.topCategories?.map(c => `- ${c.name}: R$ ${c.value}`).join('\n') || 'Sem dados'}
 
-Tendências detectadas:
+Tendências:
 ${summary.trends?.map(t => `- ${t.category}: ${t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '→'} ${t.change}%`).join('\n') || 'Sem dados suficientes'}
 
-Retorne um JSON:
+Retorne JSON:
 {
   "overall_health": "good" | "attention" | "critical",
   "score": 0-100,
-  "summary": "avaliação geral em 2-3 frases",
+  "summary": "avaliação em 2-3 frases",
   "tips": ["dica 1", "dica 2", "dica 3"],
-  "highlight": "o ponto mais importante para o usuário focar agora"
+  "highlight": "o ponto mais importante para focar agora"
 }
 
-Seja prático, direto e encorajador. Português do Brasil.`;
+Seja prático e encorajador. Português do Brasil.`;
 
-  const raw = await callGemini(prompt);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (match) { try { return JSON.parse(match[0]); } catch {} }
-    return null;
-  }
+  const result = parseJSON(await callGemini(prompt));
+  if (result) setCache(cacheKey, result);
+  return result;
 }
 
-/** Verifica se a API está configurada */
 export function isGeminiConfigured() {
   return !!import.meta.env.VITE_GEMINI_KEY;
 }

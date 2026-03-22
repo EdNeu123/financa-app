@@ -56,7 +56,6 @@ export default function Market({ userPlan }) {
       if (data.results?.length) {
         const mapped = data.results.map(s => ({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow }));
         setStocks(mapped);
-        if (hasGemini && !aiPicks) fetchAiAnalysis(mapped);
       }
       try { const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}`); if(ir.ok){const ib=await ir.json();if(ib.results?.[0])setIbov({price:ib.results[0].regularMarketPrice,change:ib.results[0].regularMarketChangePercent});} } catch{}
       setLastUpdate(new Date());

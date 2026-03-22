@@ -19,6 +19,7 @@ const DIR_ICONS = { up: TrendingUp, down: TrendingDown, stable: Minus };
 export default function Insights({ transactions, budgets, categories }) {
   const [aiInsight, setAiInsight] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const hasGemini = isGeminiConfigured();
 
   const trends = useMemo(() => detectTrends(transactions), [transactions]);
@@ -56,7 +57,8 @@ export default function Insights({ transactions, budgets, categories }) {
     const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({ name, value: Math.round(value) }));
 
     const result = await analyzeSpending({ income: Math.round(income), expense: Math.round(expense), saved: Math.round(saved), available: Math.round(income - expense - saved), topCategories: topCats, trends: trends.slice(0, 5) });
-    setAiInsight(result);
+    if (result) { setAiInsight(result); setAiError(''); }
+    else setAiError('Não foi possível analisar agora. Aguarde alguns segundos e tente novamente.');
     setAiLoading(false);
   };
 
@@ -118,7 +120,10 @@ export default function Insights({ transactions, budgets, categories }) {
               )}
             </div>
           ) : !aiLoading && (
-            <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Clique em "Analisar gastos" para uma avaliação personalizada com IA</p>
+            <div className="text-center py-4">
+              {aiError ? <p className="text-sm" style={{ color: 'var(--danger)' }}>{aiError}</p>
+                : <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Clique em "Analisar gastos" para uma avaliação personalizada com IA</p>}
+            </div>
           )}
         </div>
       )}
