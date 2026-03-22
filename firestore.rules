@@ -1,0 +1,138 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isValidAmount(amount) {
+      return amount is number
+          && amount >= 0.01
+          && amount <= 9999999.99;
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string
+          && val.size() >= 1
+          && val.size() <= maxLen;
+    }
+
+    function isValidTxType(type) {
+      return type in ['income', 'expense'];
+    }
+
+    function isValidCatType(type) {
+      return type in ['income', 'expense', 'both'];
+    }
+
+    function isValidDate(date) {
+      return date is string
+          && date.size() == 10
+          && date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidColor(color) {
+      return color is string
+          && color.size() == 7
+          && color.matches('^#[0-9a-fA-F]{6}$');
+    }
+
+    function isValidTags(tags) {
+      return tags is list && tags.size() <= 10;
+    }
+
+    // ── Transações ─────────────────────────────────────────
+    match /transactions/{docId} {
+      allow read: if isAuth()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidTxType(request.resource.data.type)
+                    && isNonEmptyString(request.resource.data.description, 200)
+                    && isValidAmount(request.resource.data.amount)
+                    && isNonEmptyString(request.resource.data.category, 80)
+                    && isValidDate(request.resource.data.date)
+                    && isValidTags(request.resource.data.tags)
+                    && (!('notes' in request.resource.data)
+                        || (request.resource.data.notes is string
+                            && request.resource.data.notes.size() <= 500));
+
+      allow update: if isAuth()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && isValidTxType(request.resource.data.type)
+                    && isNonEmptyString(request.resource.data.description, 200)
+                    && isValidAmount(request.resource.data.amount)
+                    && isNonEmptyString(request.resource.data.category, 80)
+                    && isValidDate(request.resource.data.date)
+                    && isValidTags(request.resource.data.tags);
+
+      allow delete: if isAuth()
+                    && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Categorias ─────────────────────────────────────────
+    match /categories/{docId} {
+      allow read: if isAuth()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+                    && request.resource.data.userId == request.auth.uid
+                    && isNonEmptyString(request.resource.data.name, 80)
+                    && isNonEmptyString(request.resource.data.icon, 10)
+                    && isValidCatType(request.resource.data.type)
+                    && isValidColor(request.resource.data.color);
+
+      allow update: if isAuth()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && isNonEmptyString(request.resource.data.name, 80)
+                    && isNonEmptyString(request.resource.data.icon, 10)
+                    && isValidCatType(request.resource.data.type)
+                    && isValidColor(request.resource.data.color);
+
+      allow delete: if isAuth()
+                    && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Metas ──────────────────────────────────────────────
+    match /goals/{docId} {
+      allow read: if isAuth()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+                    && request.resource.data.userId == request.auth.uid
+                    && isNonEmptyString(request.resource.data.name, 80)
+                    && isValidAmount(request.resource.data.target)
+                    && isNonEmptyString(request.resource.data.icon, 10)
+                    && isValidColor(request.resource.data.color)
+                    && (request.resource.data.deadline == null
+                        || isValidDate(request.resource.data.deadline))
+                    && (!('notes' in request.resource.data)
+                        || (request.resource.data.notes is string
+                            && request.resource.data.notes.size() <= 500));
+
+      allow update: if isAuth()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && isNonEmptyString(request.resource.data.name, 80)
+                    && isValidAmount(request.resource.data.target)
+                    && isNonEmptyString(request.resource.data.icon, 10)
+                    && isValidColor(request.resource.data.color)
+                    && (request.resource.data.deadline == null
+                        || isValidDate(request.resource.data.deadline));
+
+      allow delete: if isAuth()
+                    && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Deny-all fallback ──────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

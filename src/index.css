@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2e3f56 transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background-color: #2e3f56; border-radius: 20px; }
+  ::selection { background: #22c55e33; color: #4ade80; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface-2/60 backdrop-blur-md border border-white/5 rounded-2xl;
+  }
+  .input-field {
+    @apply w-full bg-surface-3/80 border border-white/10 rounded-xl px-4 py-3
+           text-white placeholder-gray-500 text-sm
+           focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/50
+           transition-all duration-200;
+  }
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-500 text-white font-semibold
+           px-6 py-3 rounded-xl transition-all duration-200
+           active:scale-[0.98] shadow-lg shadow-brand-600/20
+           hover:shadow-brand-500/30;
+  }
+  .btn-ghost {
+    @apply bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white
+           font-medium px-4 py-2.5 rounded-xl transition-all duration-200;
+  }
+  .tag-pill {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full
+           text-xs font-medium border border-white/10;
+  }
+}
+
+.bg-orb {
+  position: fixed; width: 600px; height: 600px; border-radius: 50%;
+  filter: blur(120px); opacity: 0.08; pointer-events: none; z-index: 0;
+}
+.bg-orb-1 {
+  top: -200px; right: -200px;
+  background: radial-gradient(circle, #22c55e, #0ea5e9);
+  animation: float1 20s ease-in-out infinite;
+}
+.bg-orb-2 {
+  bottom: -300px; left: -200px;
+  background: radial-gradient(circle, #8b5cf6, #ec4899);
+  animation: float2 25s ease-in-out infinite;
+}
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-60px, 40px) scale(1.1); }
+  66% { transform: translate(30px, -20px) scale(0.95); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -30px) scale(0.9); }
+  66% { transform: translate(-40px, 50px) scale(1.05); }
+}
