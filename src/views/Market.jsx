@@ -82,8 +82,10 @@ export default function Market({ userPlan }) {
         <div className="card p-8 text-center">
           <BarChart3 className="w-12 h-12 mx-auto mb-4" style={{color:'var(--text-muted)'}}/>
           <h2 className="text-xl font-bold font-display mb-2" style={{color:'var(--text-primary)'}}>Mercado financeiro</h2>
-          <p className="text-sm mb-6 max-w-md mx-auto" style={{color:'var(--text-secondary)'}}>Ibovespa em tempo real, cotações de ações, sugestões com IA e notícias do mercado — disponível no plano Pro.</p>
-          <button className="btn-primary" onClick={()=>alert('Upgrade: altere o campo plan para "pro" no Firestore (gamification/{uid})')}>Fazer upgrade para Pro</button>
+          <p className="text-sm mb-4 max-w-md mx-auto" style={{color:'var(--text-secondary)'}}>Ibovespa em tempo real, cotações de ações, sugestões com IA e notícias — disponível no plano Pro.</p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm" style={{background:'var(--accent-light)', color:'var(--accent)'}}>
+            Integração de pagamento em breve
+          </div>
         </div>
       ) : (<>
 

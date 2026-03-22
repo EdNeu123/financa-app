@@ -8,6 +8,7 @@ import * as BudgetCtrl from './controllers/BudgetController';
 import * as GamCtrl from './controllers/GamificationController';
 import { DEFAULT_CATEGORIES, PLAN_LIMITS } from './utils/constants';
 import { useRecurring } from './hooks/useRecurring';
+import Logo from './components/Logo';
 
 // Site pages (public)
 import SiteNav from './views/site/SiteNav';
@@ -39,7 +40,7 @@ function LoadingScreen() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-          <span className="text-white font-extrabold text-base font-display">Q</span>
+          <Logo size={48} />
         </div>
         <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
       </motion.div>
@@ -81,7 +82,16 @@ function AppContent() {
     });
     const u3 = GoalCtrl.subscribe(user.uid, d => { setGoals(d); check(); });
     const u4 = BudgetCtrl.subscribe(user.uid, d => { setBudgets(d); check(); });
-    const u5 = GamCtrl.subscribe(user.uid, d => { setGamification(d); if (d) GamCtrl.updateStreak(user.uid, d); check(); });
+    const u5 = GamCtrl.subscribe(user.uid, d => {
+      if (!d) {
+        // First login — create gamification doc
+        GamCtrl.updateStreak(user.uid, { xp: 0, streak: 0, lastLogin: null, achievements: [], plan: 'free' });
+      } else {
+        setGamification(d);
+        GamCtrl.updateStreak(user.uid, d);
+      }
+      check();
+    });
     const t = setTimeout(() => setDataLoading(false), 5000);
     return () => { u1(); u2(); u3(); u4(); u5(); clearTimeout(t); };
   }, [user]);
@@ -134,7 +144,8 @@ function AppContent() {
   };
 
   return (
-    <Layout activePage={activePage} setActivePage={setActivePage} alerts={budgetAlerts}>
+    <Layout activePage={activePage} setActivePage={setActivePage} alerts={budgetAlerts}
+      transactions={transactions} budgets={budgets} goals={goals} gamification={gamification}>
       <motion.div key={activePage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {pages[activePage]}
       </motion.div>

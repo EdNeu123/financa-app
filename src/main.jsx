@@ -4,6 +4,10 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
+import { registerSW } from './utils/notifications';
+
+// Register PWA service worker
+registerSW();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

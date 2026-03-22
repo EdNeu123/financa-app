@@ -1,3 +1,4 @@
+import Logo from "../../components/Logo";
 import { Link } from 'react-router-dom';
 
 export default function SiteFooter() {
@@ -7,9 +8,7 @@ export default function SiteFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-                <span className="text-white font-extrabold text-xs font-display">Q</span>
-              </div>
+              <Logo size={28} />
               <span className="font-bold font-display" style={{ color: 'var(--text-primary)' }}>Quanto</span>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>Cada real no lugar certo.</p>

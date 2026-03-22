@@ -80,13 +80,21 @@ export default function Education() {
   const loadVideos = async () => {
     if (!ytKey) { setYtError('Configure VITE_YOUTUBE_KEY no .env (mesmo console do Google Cloud, ative "YouTube Data API v3").'); return; }
     setYtLoading(true); setYtError('');
+    // Limpa cache para forçar novas sugestões
+    try { sessionStorage.removeItem(YT_CACHE_KEY); } catch {}
     const result = await fetchYouTubeVideos(ytKey);
     if (result.length > 0) setVideos(result);
     else setYtError('Não foi possível carregar vídeos. Verifique se a YouTube Data API v3 está ativada no seu Google Cloud Console.');
     setYtLoading(false);
   };
 
-  useEffect(() => { if (tab === 'videos' && videos.length === 0 && ytKey) loadVideos(); }, [tab]);
+  // Carrega do cache silenciosamente ao abrir a aba, sem chamar a API
+  useEffect(() => {
+    if (tab === 'videos' && videos.length === 0) {
+      const cached = getCachedVideos();
+      if (cached) setVideos(cached);
+    }
+  }, [tab]);
 
   const formatDate = (iso) => { try { return new Date(iso).toLocaleDateString('pt-BR', { day:'numeric', month:'short' }); } catch { return ''; } };
 
@@ -187,7 +195,18 @@ export default function Education() {
           {!ytLoading && videos.length === 0 && !ytError && (
             <div className="text-center py-12">
               <Youtube className="w-10 h-10 mx-auto mb-3" style={{ color:'var(--text-muted)' }} />
-              <p className="text-sm" style={{ color:'var(--text-muted)' }}>Clique na aba para carregar vídeos dos canais</p>
+              <p className="text-sm mb-4" style={{ color:'var(--text-muted)' }}>Clique para buscar vídeos de educação financeira</p>
+              <button onClick={loadVideos} className="btn-primary text-sm inline-flex items-center gap-2">
+                <Youtube className="w-4 h-4" /> Buscar vídeos
+              </button>
+            </div>
+          )}
+
+          {videos.length > 0 && (
+            <div className="flex justify-end mb-3">
+              <button onClick={loadVideos} disabled={ytLoading} className="btn-ghost text-xs inline-flex items-center gap-1.5 !py-1.5 !px-3">
+                <RefreshCw className={`w-3 h-3 ${ytLoading ? 'animate-spin' : ''}`} /> Novas sugestões
+              </button>
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+import Logo from "../components/Logo";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as AuthController from '../controllers/AuthController';
@@ -59,9 +60,7 @@ export default function AuthPage() {
             <ArrowLeft className="w-4 h-4" /> Voltar ao site
           </Link>
           <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-              <span className="text-white font-extrabold text-sm font-display">Q</span>
-            </div>
+            <Logo size={40} />
             <span className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Quanto</span>
           </div>
 
@@ -118,9 +117,7 @@ export default function AuthPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-              <span className="text-white font-extrabold text-sm font-display">Q</span>
-            </div>
+            <Logo size={36} />
             <span className="text-xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Quanto</span>
           </div>
 

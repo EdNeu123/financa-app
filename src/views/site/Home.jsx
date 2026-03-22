@@ -23,7 +23,12 @@ export default function Home() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 pt-16 pb-20 md:pt-28 md:pb-32">
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'rgba(13,148,136,0.07)' }} />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: 'rgba(139,92,246,0.04)' }} />
+        <div className="absolute top-[30%] right-[15%] w-[200px] h-[200px] rounded-full blur-[80px] pointer-events-none" style={{ background: 'rgba(251,191,36,0.03)' }} />
+
+        <div className="max-w-6xl mx-auto px-6 pt-16 pb-20 md:pt-28 md:pb-32 relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
             className="text-center max-w-3xl mx-auto">
 
@@ -109,6 +114,75 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Visual flow — como funciona em 3 passos com ilustrações */}
+      <section className="py-20 relative overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--border)" strokeWidth="0.5"/></pattern>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+        <div className="max-w-5xl mx-auto px-6 relative">
+          <motion.div {...fade} className="text-center mb-16">
+            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--accent)' }}>Como funciona</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold font-display">3 passos. Zero complicação.</h2>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { num: '01', title: 'Registre', desc: 'Adicione receitas, despesas e o que guardou para metas. Manual ou recorrente.', svg: (
+                <svg viewBox="0 0 120 80" className="w-full h-20">
+                  <rect x="15" y="10" width="90" height="60" rx="8" fill="none" stroke="var(--accent)" strokeWidth="1.5" opacity="0.3" />
+                  <line x1="30" y1="28" x2="90" y2="28" stroke="var(--accent)" strokeWidth="1" opacity="0.2" />
+                  <line x1="30" y1="40" x2="75" y2="40" stroke="var(--accent)" strokeWidth="1" opacity="0.2" />
+                  <line x1="30" y1="52" x2="60" y2="52" stroke="var(--accent)" strokeWidth="1" opacity="0.2" />
+                  <circle cx="85" cy="52" r="8" fill="var(--accent)" opacity="0.15" />
+                  <path d="M82 52 L85 55 L89 49" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+                </svg>
+              )},
+              { num: '02', title: 'Acompanhe', desc: 'Dashboard mostra tudo: receita, despesa, guardado e disponível em tempo real.', svg: (
+                <svg viewBox="0 0 120 80" className="w-full h-20">
+                  <rect x="10" y="8" width="45" height="25" rx="5" fill="var(--accent)" opacity="0.1" />
+                  <rect x="65" y="8" width="45" height="25" rx="5" fill="var(--accent)" opacity="0.07" />
+                  <path d="M15 55 C30 45 45 50 60 40 S80 35 105 30" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+                  <circle cx="105" cy="30" r="3" fill="var(--accent)" opacity="0.4" />
+                  <rect x="10" y="62" width="100" height="10" rx="5" fill="var(--accent)" opacity="0.06" />
+                </svg>
+              )},
+              { num: '03', title: 'Evolua', desc: 'Insights com IA, projeções, conquistas e notificações mantêm você no controle.', svg: (
+                <svg viewBox="0 0 120 80" className="w-full h-20">
+                  <circle cx="60" cy="40" r="28" fill="none" stroke="var(--accent)" strokeWidth="1.5" opacity="0.2" />
+                  <path d="M60 15 A25 25 0 1 1 38 58" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                  <text x="60" y="44" textAnchor="middle" fill="var(--accent)" fontSize="14" fontWeight="700" opacity="0.5">85</text>
+                  <path d="M95 20 L100 15 L105 25" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+                </svg>
+              )},
+            ].map((step, i) => (
+              <motion.div key={i} {...fade} transition={{ delay: i * 0.12 }} className="text-center">
+                <div className="mb-4">{step.svg}</div>
+                <div className="inline-flex items-center gap-2 mb-2">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{step.num}</span>
+                  <h3 className="font-bold font-display" style={{ color: 'var(--text-primary)' }}>{step.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard preview */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px] pointer-events-none" style={{ background: 'rgba(13,148,136,0.04)' }} />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <motion.div {...fade} className="text-center mb-12">
+            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--accent)' }}>Visualize</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold font-display mb-3">Seu dinheiro, numa tela só</h2>
+            <p className="text-base max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>Dashboard completo com gráficos, metas e controle em tempo real.</p>
+          </motion.div>
+          <motion.div {...fade}><DashboardMockup /></motion.div>
         </div>
       </section>
 

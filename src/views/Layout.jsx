@@ -21,7 +21,10 @@ const NAV = [
   { id: 'market',       label: 'Mercado',        icon: LineChart },
 ];
 
-export default function Layout({ activePage, setActivePage, children, alerts }) {
+import Logo from '../components/Logo';
+import NotificationCenter from './NotificationCenter';
+
+export default function Layout({ activePage, setActivePage, children, alerts, transactions, budgets, goals, gamification }) {
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
@@ -35,9 +38,7 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
   const Sidebar = () => (
     <div className="flex flex-col h-full">
       <div className="px-5 py-5 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-          <span className="text-white font-extrabold text-xs font-display">Q</span>
-        </div>
+        <Logo size={32} />
         <span className="text-lg font-bold font-display tracking-tight" style={{ color: 'var(--text-primary)' }}>Quanto</span>
       </div>
 
@@ -65,6 +66,10 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
       </nav>
 
       <div className="px-3 pb-3 space-y-2">
+        <div className="flex items-center gap-2 px-3 py-1">
+          <NotificationCenter transactions={transactions} budgets={budgets} goals={goals} gamification={gamification} />
+          <span className="text-[13px] font-medium" style={{ color: 'var(--text-muted)' }}>Notificações</span>
+        </div>
         <button onClick={toggle}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all"
           style={{ color: 'var(--text-muted)' }}>
@@ -123,9 +128,12 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
           <span className="font-display font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             {NAV.find(n => n.id === activePage)?.label}
           </span>
-          <button onClick={toggle} className="ml-auto p-2 rounded-xl" style={{ color: 'var(--text-muted)' }}>
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationCenter transactions={transactions} budgets={budgets} goals={goals} gamification={gamification} />
+            <button onClick={toggle} className="p-2 rounded-xl" style={{ color: 'var(--text-muted)' }}>
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>

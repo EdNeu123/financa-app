@@ -1,3 +1,4 @@
+import Logo from "../../components/Logo";
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Sun, Moon, Menu, X } from 'lucide-react';
@@ -21,9 +22,7 @@ export default function SiteNav() {
       style={{ borderColor: 'var(--border)', background: theme === 'dark' ? 'rgba(28,28,30,0.88)' : 'rgba(245,245,247,0.88)' }}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-            <span className="text-white font-extrabold text-sm font-display">Q</span>
-          </div>
+          <Logo size={32} />
           <span className="text-lg font-bold font-display tracking-tight" style={{ color: 'var(--text-primary)' }}>Quanto</span>
         </Link>
 
