@@ -84,9 +84,14 @@ function AppContent() {
     const u4 = BudgetCtrl.subscribe(user.uid, d => { setBudgets(d); check(); });
     const u5 = GamCtrl.subscribe(user.uid, d => {
       if (!d) {
-        // First login — create gamification doc
-        GamCtrl.updateStreak(user.uid, { xp: 0, streak: 0, lastLogin: null, achievements: [], plan: 'free' });
+        // First login — create gamification doc (default: pro until monetization)
+        GamCtrl.updateStreak(user.uid, { xp: 0, streak: 0, lastLogin: null, achievements: [], plan: 'pro' });
       } else {
+        // Auto-upgrade: all users are pro until monetization starts
+        if (d.plan === 'free' || !d.plan) {
+          import('./models/GamificationModel').then(m => m.save(user.uid, { plan: 'pro' }));
+          d = { ...d, plan: 'pro' };
+        }
         setGamification(d);
         GamCtrl.updateStreak(user.uid, d);
       }
@@ -96,8 +101,8 @@ function AppContent() {
     return () => { u1(); u2(); u3(); u4(); u5(); clearTimeout(t); };
   }, [user]);
 
-  const userPlan = gamification?.plan || 'free';
-  const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
+  const userPlan = gamification?.plan || 'pro'; // default pro until monetization
+  const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.pro;
   const monthKey = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`; })();
   const monthTxCount = transactions.filter(t => t.date?.startsWith(monthKey)).length;
 
