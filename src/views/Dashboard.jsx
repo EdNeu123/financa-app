@@ -45,6 +45,7 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
   }, [mtx, categories]);
 
   const level = gamification ? (() => { let cur = LEVELS[0]; for (const l of LEVELS) { if ((gamification.xp || 0) >= l.xpNeeded) cur = l; else break; } return cur; })() : null;
+  const nextLevel = level ? LEVELS.find(l => l.xpNeeded > (level.xpNeeded || 0)) || level : null;
 
   const cards = [
     { label: 'Receitas', value: summary.income, icon: ArrowUpRight, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
@@ -72,38 +73,51 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
       {/* Gamification strip */}
       {gamification && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="card p-4 flex items-center gap-4 flex-wrap">
+          className="card-glass p-4 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: (level?.color || '#94a3b8') + '20' }}>
-              <span className="text-sm font-bold" style={{ color: level?.color }}>{level?.level}</span>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: (level?.color || '#94a3b8') + '15' }}>
+              <span className="text-base font-extrabold" style={{ color: level?.color }}>{level?.level}</span>
             </div>
-            <div><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
+            <div><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
+          </div>
+          <div className="flex-1 hidden sm:block">
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, ((gamification.xp || 0) - (level?.xpNeeded || 0)) / ((nextLevel?.xpNeeded || 100) - (level?.xpNeeded || 0)) * 100)}%`, background: level?.color || 'var(--accent)' }} />
+            </div>
           </div>
           {gamification.streak > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.1)' }}>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.08)' }}>
               <Flame className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
-              <span className="text-xs font-semibold" style={{ color: '#f97316' }}>{gamification.streak} dias seguidos</span>
+              <span className="text-xs font-semibold" style={{ color: '#f97316' }}>{gamification.streak} dias</span>
             </div>
           )}
         </motion.div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c, i) => (
-          <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{c.label}</span>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.bg }}><c.icon className="w-4 h-4" style={{ color: c.color }} /></div>
+          <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+            className="stat-card relative overflow-hidden">
+            {/* Subtle glow */}
+            <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl" style={{ background: c.color, opacity: 0.06 }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: c.color + '12' }}>
+                  <c.icon className="w-4 h-4" style={{ color: c.color }} />
+                </div>
+              </div>
+              <p className="text-2xl lg:text-3xl font-extrabold font-mono tracking-tight" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
+              <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
             </div>
-            <p className="stat-value font-mono" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 card p-5">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 card-glass p-6">
           <p className="section-title">Receitas vs despesas</p>
-          <div className="h-[240px]">
+          <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

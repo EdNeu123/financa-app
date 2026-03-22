@@ -91,10 +91,10 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex app-bg">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[240px] flex-col border-r fixed inset-y-0 left-0 z-30"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+        style={{ background: 'var(--bg-card-solid, var(--bg-secondary))', borderColor: 'var(--border)', backdropFilter: 'blur(16px)' }}>
         <Sidebar />
       </aside>
 
@@ -114,9 +114,9 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
         )}
       </AnimatePresence>
 
-      <main className="flex-1 lg:ml-[240px]">
+      <main className="flex-1 lg:ml-[240px] relative z-[1]">
         <div className="lg:hidden sticky top-0 z-20 backdrop-blur-xl border-b px-4 py-3 flex items-center gap-3"
-          style={{ background: theme === 'dark' ? 'rgba(28,28,30,0.85)' : 'rgba(245,245,247,0.85)', borderColor: 'var(--border)' }}>
+          style={{ background: theme === 'dark' ? 'rgba(15,15,18,0.9)' : 'rgba(245,245,247,0.9)', borderColor: 'var(--border)' }}>
           <button onClick={() => setOpen(true)} className="p-2 rounded-xl" style={{ color: 'var(--text-primary)' }}>
             <Menu className="w-5 h-5" />
           </button>
