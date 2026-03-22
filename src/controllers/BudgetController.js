@@ -1,8 +1,9 @@
 import * as Model from '../models/AlertModel';
 import { sanitizeString, sanitizeAmount, LIMITS } from '../utils/validators';
 
-export async function create(uid, raw) {
+export async function create(uid, raw, { count = 0, limit = 30 } = {}) {
   if(!uid) return {success:false,error:'Não autenticado'};
+  if(count >= limit) return {success:false,error:`Limite de ${limit} orçamentos no seu plano.${limit < 30 ? ' Faça upgrade para o Pro.' : ''}`};
   const cat = sanitizeString(raw.category,LIMITS.STRING_MAX_SHORT);
   if(!cat) return {success:false,error:'Categoria obrigatória'};
   const limit = sanitizeAmount(raw.limitAmount);

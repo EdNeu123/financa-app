@@ -63,6 +63,12 @@ export const ACHIEVEMENTS = [
   { id: 'learn_5',       title: 'Estudioso',             desc: 'Leia 5 artigos sobre finanças',       xp: 100, icon: 'book' },
 ];
 
+// Limites reais por plano — enforced nos controllers
+export const PLAN_LIMITS = {
+  free: { transactions: 50, categories: 8, goals: 2, budgets: 3, market: false },
+  pro:  { transactions: Infinity, categories: 50, goals: 30, budgets: 30, market: true },
+};
+
 export const PLANS = [
   {
     id: 'free',
@@ -72,10 +78,13 @@ export const PLANS = [
     desc: 'Para começar a organizar suas finanças',
     features: [
       'Até 50 transações/mês',
-      '5 categorias',
+      'Até 8 categorias',
       '2 metas financeiras',
-      'Dashboard básico',
+      '3 orçamentos por categoria',
+      'Dashboard com gráficos',
+      'Sistema de conquistas e XP',
       'Tema claro e escuro',
+      'Hub de educação financeira',
     ],
     cta: 'Começar grátis',
     popular: false,
@@ -90,12 +99,12 @@ export const PLANS = [
       'Transações ilimitadas',
       'Categorias ilimitadas',
       'Metas ilimitadas',
-      'Alertas de gastos',
-      'Orçamentos por categoria',
-      'Relatórios avançados',
+      'Orçamentos ilimitados',
+      'Alertas de gastos avançados',
       'Exportar CSV',
-      'Hub de educação financeira',
-      'Sistema de conquistas',
+      'Ibovespa em tempo real',
+      'Sugestões de ações do dia',
+      'Guardar dinheiro para metas',
     ],
     cta: 'Assinar Pro',
     popular: true,
@@ -108,14 +117,12 @@ export const PLANS = [
     desc: 'O pacote completo para investidores',
     features: [
       'Tudo do Pro',
-      'Ibovespa em tempo real',
+      'Transações recorrentes automáticas',
+      'Análise de tendências por categoria',
+      'Projeção de gastos com IA',
       'Sugestões de ações com IA',
-      'Análise de tendências',
-      'Projeção de gastos',
-      'Transações recorrentes',
-      'Suporte prioritário',
-      'API de integração',
-      'Multi-contas',
+      'Alertas inteligentes de gastos',
+      'Score de saúde financeira',
     ],
     cta: 'Assinar Ultra',
     popular: false,

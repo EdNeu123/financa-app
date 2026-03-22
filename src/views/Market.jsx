@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, RefreshCw, ExternalLink, AlertTriangle, Globe, BarChart3, Zap, Info, X, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, ExternalLink, AlertTriangle, Globe, BarChart3, Zap, Info, X, Search, Brain } from 'lucide-react';
 
 const TRACKED = ['PETR4','VALE3','ITUB4','BBDC4','ABEV3','WEGE3','BBAS3','RENT3','SUZB3','HAPV3'];
 
@@ -23,23 +23,41 @@ const NEWS_TOPICS = [
   { query:'governo fiscal reforma tributária', title:'Política fiscal — Reformas e gastos', cat:'Governo' },
 ];
 
-export default function Market() {
+import { analyzeStocks, isGeminiConfigured } from '../utils/gemini';
+
+export default function Market({ userPlan }) {
+  const isFree = userPlan === 'free';
   const [stocks, setStocks] = useState([]);
   const [ibov, setIbov] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [showMethod, setShowMethod] = useState(false);
+  const [aiPicks, setAiPicks] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const hasGemini = isGeminiConfigured();
+
+  const fetchAiAnalysis = async (stockData) => {
+    if (!hasGemini || !stockData?.length) return;
+    setAiLoading(true);
+    const result = await analyzeStocks(stockData);
+    if (result) setAiPicks(result);
+    setAiLoading(false);
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     const token = import.meta.env.VITE_BRAPI_TOKEN || '';
-    if (!token) { setError('Configure VITE_BRAPI_TOKEN no seu .env para ativar cotações em tempo real. Crie um token grátis em brapi.dev.'); setLoading(false); return; }
+    if (!token) { setError('As cotações em tempo real precisam ser configuradas pelo administrador. Consulte a documentação.'); setLoading(false); return; }
     try {
       const res = await fetch(`https://brapi.dev/api/quote/${TRACKED.join(',')}?token=${token}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      if (data.results?.length) setStocks(data.results.map(s => ({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow })));
+      if (data.results?.length) {
+        const mapped = data.results.map(s => ({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow }));
+        setStocks(mapped);
+        if (hasGemini && !aiPicks) fetchAiAnalysis(mapped);
+      }
       try { const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}`); if(ir.ok){const ib=await ir.json();if(ib.results?.[0])setIbov({price:ib.results[0].regularMarketPrice,change:ib.results[0].regularMarketChangePercent});} } catch{}
       setLastUpdate(new Date());
     } catch(e) { console.error(e); setError('Falha ao carregar cotações. Verifique seu token e conexão.'); }
@@ -61,10 +79,19 @@ export default function Market() {
         </div>
       </div>
 
+      {isFree ? (
+        <div className="card p-8 text-center">
+          <BarChart3 className="w-12 h-12 mx-auto mb-4" style={{color:'var(--text-muted)'}}/>
+          <h2 className="text-xl font-bold font-display mb-2" style={{color:'var(--text-primary)'}}>Mercado financeiro</h2>
+          <p className="text-sm mb-6 max-w-md mx-auto" style={{color:'var(--text-secondary)'}}>Ibovespa em tempo real, cotações de ações, sugestões com IA e notícias do mercado — disponível no plano Pro.</p>
+          <button className="btn-primary" onClick={()=>alert('Upgrade: altere o campo plan para "pro" no Firestore (gamification/{uid})')}>Fazer upgrade para Pro</button>
+        </div>
+      ) : (<>
+
       {error&&(<div className="card p-4 flex items-start gap-3" style={{borderColor:'#f59e0b'}}>
         <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{color:'#f59e0b'}}/>
         <div><p className="text-sm" style={{color:'var(--text-primary)'}}>{error}</p>
-          <a href="https://brapi.dev" target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 mt-1" style={{color:'var(--accent)'}}>Criar token grátis em brapi.dev <ExternalLink className="w-3 h-3"/></a>
+          <p className="text-xs mt-1" style={{color:'var(--accent)'}}>Verifique o arquivo .env.example para instruções de configuração.</p>
         </div>
       </div>)}
 
@@ -97,23 +124,38 @@ export default function Market() {
 
         <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2}} className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4" style={{color:'var(--accent)'}}/><p className="text-xs font-semibold uppercase tracking-wider" style={{color:'var(--text-muted)'}}>Sugestões do dia</p></div>
-            <button onClick={()=>setShowMethod(true)} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}><Info className="w-3 h-3"/>Como funciona</button>
+            <div className="flex items-center gap-2">
+              {aiPicks?<Brain className="w-4 h-4" style={{color:'#8b5cf6'}}/>:<Zap className="w-4 h-4" style={{color:'var(--accent)'}}/>}
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{color:'var(--text-muted)'}}>{aiPicks?'Análise IA':'Sugestões do dia'}</p>
+            </div>
+            <div className="flex gap-1">
+              {hasGemini&&<button onClick={()=>fetchAiAnalysis(stocks)} disabled={aiLoading} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md" style={{background:'rgba(139,92,246,0.1)',color:'#8b5cf6'}}>{aiLoading?<RefreshCw className="w-3 h-3 animate-spin"/>:<Brain className="w-3 h-3"/>}{aiLoading?'...':'IA'}</button>}
+              <button onClick={()=>setShowMethod(true)} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}><Info className="w-3 h-3"/></button>
+            </div>
           </div>
-          <div className="space-y-3">{PICKS.map(p=>(
+          {aiPicks?.market_summary&&<p className="text-xs mb-3 p-2.5 rounded-lg leading-relaxed" style={{background:'rgba(139,92,246,0.06)',color:'var(--text-secondary)'}}>{aiPicks.market_summary}</p>}
+          <div className="space-y-3">{(aiPicks?.picks||PICKS).map(p=>(
             <div key={p.ticker} className="p-3 rounded-xl" style={{background:'var(--bg-secondary)'}}>
-              <div className="flex items-center justify-between mb-1"><span className="font-mono font-semibold text-sm" style={{color:'var(--text-primary)'}}>{p.ticker}</span><span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{background:sC[p.sentiment]+'15',color:sC[p.sentiment]}}>{sL[p.sentiment]}</span></div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono font-semibold text-sm" style={{color:'var(--text-primary)'}}>{p.ticker}</span>
+                <div className="flex items-center gap-1.5">
+                  {p.risk&&<span className="text-[9px] px-1.5 py-0.5 rounded" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}>Risco: {p.risk}</span>}
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{background:sC[p.sentiment]+'15',color:sC[p.sentiment]}}>{sL[p.sentiment]}</span>
+                </div>
+              </div>
               <p className="text-xs leading-relaxed" style={{color:'var(--text-secondary)'}}>{p.reason}</p>
-              <p className="text-[10px] mt-1.5 flex items-center gap-1" style={{color:'var(--text-muted)'}}><Info className="w-2.5 h-2.5"/>Base: {p.basis}</p>
+              {p.basis&&<p className="text-[10px] mt-1.5 flex items-center gap-1" style={{color:'var(--text-muted)'}}><Info className="w-2.5 h-2.5"/>{p.basis}</p>}
             </div>))}</div>
-          <p className="text-[10px] mt-4 p-2 rounded-lg leading-relaxed" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}>Sugestões educacionais. Não constituem recomendação de investimento.</p>
+          <p className="text-[10px] mt-4 p-2 rounded-lg leading-relaxed" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}>
+            {aiPicks?'Análise gerada por IA com dados reais. ':''}Não constitui recomendação de investimento.
+          </p>
         </motion.div>
       </div>
 
       {/* News - Google News search links */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-2"><Globe className="w-4 h-4" style={{color:'var(--accent)'}}/><p className="section-title !mb-0">Notícias do mercado</p></div>
-        <p className="text-xs mb-4" style={{color:'var(--text-muted)'}}>Cada card abre as notícias mais recentes sobre o tema no Google News</p>
+        <p className="text-xs mb-4" style={{color:'var(--text-muted)'}}>Cada card abre as notícias mais recentes sobre o tema</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {NEWS_TOPICS.map((n,i)=>(
             <motion.a key={i} href={buildNewsUrl(n.query)} target="_blank" rel="noopener noreferrer" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}
@@ -139,6 +181,7 @@ export default function Market() {
           </motion.div>
         </motion.div>
       )}</AnimatePresence>
+      </>)}
     </div>
   );
 }

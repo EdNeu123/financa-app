@@ -1,21 +1,21 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, X, Trash2, Pencil, Target, Download } from 'lucide-react';
+import { Plus, Search, X, Trash2, Pencil, Target, Download, Repeat } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { CategoryBadge, ICON_OPTIONS } from '../utils/icons';
 import { TAG_SUGGESTIONS } from '../utils/constants';
 import { LIMITS } from '../utils/validators';
 
 function TransactionModal({ isOpen, onClose, onSave, editData, categories, goals }) {
-  const [form, setForm] = useState({ type:'expense', description:'', amount:'', category:'', date:new Date().toISOString().split('T')[0], tags:[], notes:'', goalId:null });
+  const [form, setForm] = useState({ type:'expense', description:'', amount:'', category:'', date:new Date().toISOString().split('T')[0], tags:[], notes:'', goalId:null, recurring:false });
   const [tagInput, setTagInput] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setForm(editData ? { type:editData.type||'expense', description:editData.description||'', amount:editData.amount||'', category:editData.category||'', date:editData.date||new Date().toISOString().split('T')[0], tags:Array.isArray(editData.tags)?editData.tags:[], notes:editData.notes||'', goalId:editData.goalId||null }
-        : { type:'expense', description:'', amount:'', category:'', date:new Date().toISOString().split('T')[0], tags:[], notes:'', goalId:null });
+      setForm(editData ? { type:editData.type||'expense', description:editData.description||'', amount:editData.amount||'', category:editData.category||'', date:editData.date||new Date().toISOString().split('T')[0], tags:Array.isArray(editData.tags)?editData.tags:[], notes:editData.notes||'', goalId:editData.goalId||null, recurring:!!editData.recurring }
+        : { type:'expense', description:'', amount:'', category:'', date:new Date().toISOString().split('T')[0], tags:[], notes:'', goalId:null, recurring:false });
       setError(''); setSaving(false); setTagInput('');
     }
   }, [isOpen, editData]);
@@ -72,6 +72,17 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories, goals
             <input type="text" className="input-field" placeholder="Adicionar tag..." value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTag(tagInput);}}} maxLength={LIMITS.TAG_LENGTH_MAX}/>
             <div className="flex flex-wrap gap-1 mt-2">{TAG_SUGGESTIONS.filter(s=>!form.tags.includes(s)).slice(0,6).map(s=>(<button key={s} type="button" onClick={()=>addTag(s)} className="text-xs px-2 py-0.5 rounded-md transition-colors" style={{background:'var(--bg-tertiary)',color:'var(--text-muted)'}}>+{s}</button>))}</div>
           </div>
+          {/* Recurring toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl" style={{background:'var(--bg-secondary)'}}>
+            <div>
+              <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>Transação recorrente</p>
+              <p className="text-xs mt-0.5" style={{color:'var(--text-muted)'}}>Repetir automaticamente todo mês</p>
+            </div>
+            <button type="button" onClick={()=>setForm(f=>({...f,recurring:!f.recurring}))}
+              className="relative w-11 h-6 rounded-full transition-colors" style={{background:form.recurring?'var(--accent)':'var(--border)'}}>
+              <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform" style={{left:form.recurring?'22px':'2px'}}/>
+            </button>
+          </div>
           <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Notas (opcional)</label><textarea className="input-field resize-none h-16" placeholder="Observações..." value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} maxLength={LIMITS.STRING_MAX_LONG}/></div>
           {error&&<p className="text-sm p-2.5 rounded-lg" style={{background:'var(--danger-light)',color:'var(--danger)'}}>{error}</p>}
           <div className="flex gap-3 pt-2"><button type="button" onClick={onClose} className="btn-ghost flex-1">Cancelar</button><button type="submit" disabled={saving} className="btn-primary flex-1 disabled:opacity-50">{saving?<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"/>:editData?'Salvar':'Adicionar'}</button></div>
@@ -125,6 +136,7 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2"><p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>{tx.description}</p>
                   {linkedGoal&&<span className="badge text-[10px]" style={{background:'var(--accent-light)',color:'var(--accent)',borderColor:'transparent'}}><Target className="w-2.5 h-2.5"/>{linkedGoal.name}</span>}
+                  {tx.recurring&&<span className="badge text-[10px]" style={{background:'rgba(139,92,246,0.1)',color:'#8b5cf6',borderColor:'transparent'}}><Repeat className="w-2.5 h-2.5"/>recorrente</span>}
                   {tx.tags?.slice(0,2).map(tag=>(<span key={tag} className="badge text-[10px] hidden sm:inline-flex">{tag}</span>))}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5"><span className="text-xs" style={{color:'var(--text-muted)'}}>{tx.category}</span><span style={{color:'var(--border)'}}>·</span><span className="text-xs" style={{color:'var(--text-muted)'}}>{formatDate(tx.date)}</span></div>

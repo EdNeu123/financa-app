@@ -13,7 +13,14 @@ function validate(d,existing=[],editId=null) {
   return {...r, sanitized:{name,iconKey,type:d.type,color}};
 }
 
-export async function create(uid,raw,existing=[]) { if(!uid) return {success:false,error:'Não autenticado'}; if(existing.length>=LIMITS.CATEGORIES_MAX) return {success:false,error:`Limite de ${LIMITS.CATEGORIES_MAX} categorias`}; const v=validate(raw,existing); if(!v.valid) return {success:false,error:Object.values(v.errors)[0]}; try { await Model.create(uid,v.sanitized); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao criar'}; } }
+export async function create(uid, raw, existing = [], planLimit = 50) {
+  if (!uid) return { success: false, error: 'Não autenticado' };
+  if (existing.length >= planLimit) return { success: false, error: `Limite de ${planLimit} categorias no seu plano.${planLimit < 50 ? ' Faça upgrade para o Pro.' : ''}` };
+  const v = validate(raw, existing);
+  if (!v.valid) return { success: false, error: Object.values(v.errors)[0] };
+  try { await Model.create(uid, v.sanitized); return { success: true }; }
+  catch (e) { console.error(e); return { success: false, error: 'Erro ao criar' }; }
+}
 export async function update(id,raw,existing=[]) { if(!id) return {success:false,error:'ID inválido'}; const v=validate(raw,existing,id); if(!v.valid) return {success:false,error:Object.values(v.errors)[0]}; try { await Model.update(id,v.sanitized); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao atualizar'}; } }
 export async function remove(id) { if(!id) return {success:false,error:'ID inválido'}; try { await Model.remove(id); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao excluir'}; } }
 export const subscribe = (uid,cb) => Model.subscribe(uid,cb);

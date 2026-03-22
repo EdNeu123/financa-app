@@ -5,7 +5,7 @@ import * as CatCtrl from './controllers/CategoryController';
 import * as GoalCtrl from './controllers/GoalController';
 import * as BudgetCtrl from './controllers/BudgetController';
 import * as GamCtrl from './controllers/GamificationController';
-import { DEFAULT_CATEGORIES } from './utils/constants';
+import { DEFAULT_CATEGORIES, PLAN_LIMITS } from './utils/constants';
 import LandingPage from './views/LandingPage';
 import AuthPage from './views/AuthPage';
 import Layout from './views/Layout';
@@ -17,6 +17,8 @@ import Budgets from './views/Budgets';
 import Achievements from './views/Achievements';
 import Education from './views/Education';
 import Market from './views/Market';
+import Insights from './views/Insights';
+import { useRecurring } from './hooks/useRecurring';
 import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 
@@ -25,7 +27,7 @@ function LoadingScreen() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-          <TrendingUp className="w-6 h-6 text-white" />
+          <span className="text-white font-extrabold text-base font-display">Q</span>
         </div>
         <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
       </motion.div>
@@ -68,28 +70,37 @@ export default function App() {
     return () => { u1(); u2(); u3(); u4(); u5(); clearTimeout(t); };
   }, [user]);
 
-  // Handlers
+  // Plan limits
+  const userPlan = gamification?.plan || 'free';
+  const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
+  const monthKey = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`; })();
+  const monthTxCount = transactions.filter(t => t.date?.startsWith(monthKey)).length;
+
+  // Auto-create recurring transactions for current month
+  useRecurring(user?.uid, transactions, { monthCount: monthTxCount, limit: limits.transactions });
+
+  // Handlers with plan enforcement
   const hAddTx = useCallback(async d => {
-    const r = await TxCtrl.create(user?.uid, d);
+    const r = await TxCtrl.create(user?.uid, d, { monthCount: monthTxCount, limit: limits.transactions });
     if (r.success && user) GamCtrl.addXP(user.uid, 'ADD_TRANSACTION', gamification);
     return r;
-  }, [user, gamification]);
+  }, [user, gamification, monthTxCount, limits]);
   const hUpdTx = useCallback(async (id, d) => TxCtrl.update(id, d), []);
   const hDelTx = useCallback(async id => TxCtrl.remove(id), []);
 
-  const hAddCat = useCallback(async d => CatCtrl.create(user?.uid, d, categories), [user, categories]);
+  const hAddCat = useCallback(async d => CatCtrl.create(user?.uid, d, categories, limits.categories), [user, categories, limits]);
   const hUpdCat = useCallback(async (id, d) => CatCtrl.update(id, d, categories), [categories]);
   const hDelCat = useCallback(async id => CatCtrl.remove(id), []);
 
-  const hAddGoal = useCallback(async d => GoalCtrl.create(user?.uid, d, goals), [user, goals]);
+  const hAddGoal = useCallback(async d => GoalCtrl.create(user?.uid, d, goals, limits.goals), [user, goals, limits]);
   const hUpdGoal = useCallback(async (id, d) => GoalCtrl.update(id, d), []);
   const hDelGoal = useCallback(async id => GoalCtrl.remove(id), []);
 
   const hAddBudget = useCallback(async d => {
-    const r = await BudgetCtrl.create(user?.uid, d);
+    const r = await BudgetCtrl.create(user?.uid, d, { count: (budgets || []).length, limit: limits.budgets });
     if (r.success && user) GamCtrl.addXP(user.uid, 'SET_BUDGET', gamification);
     return r;
-  }, [user, gamification]);
+  }, [user, gamification, budgets, limits]);
   const hUpdBudget = useCallback(async (id, d) => BudgetCtrl.update(id, d), []);
   const hDelBudget = useCallback(async id => BudgetCtrl.remove(id), []);
 
@@ -112,9 +123,10 @@ export default function App() {
     categories: <Categories categories={categories} onAdd={hAddCat} onUpdate={hUpdCat} onDelete={hDelCat} />,
     goals: <Goals goals={goals} transactions={transactions} onAdd={hAddGoal} onUpdate={hUpdGoal} onDelete={hDelGoal} />,
     budgets: <Budgets budgets={budgets} transactions={transactions} categories={categories} onAdd={hAddBudget} onUpdate={hUpdBudget} onDelete={hDelBudget} />,
+    insights: <Insights transactions={transactions} budgets={budgets} categories={categories} />,
     achievements: <Achievements gamification={gamification} />,
     education: <Education />,
-    market: <Market />,
+    market: <Market userPlan={userPlan} />,
   };
 
   return (

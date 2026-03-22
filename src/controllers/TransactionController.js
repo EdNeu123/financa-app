@@ -16,10 +16,17 @@ function validate(d) {
   // Savings DEVE ter goalId
   const goalErr = d.type==='savings'&&!goalId?'Selecione uma meta para guardar':null;
   const r = validationResult({type:typeErr,description:descErr,amount:amt.valid?null:amt.error,category:catErr,date:date.valid?null:date.error,goal:goalErr});
-  return {...r, sanitized:{type:d.type,description:desc||'Reserva para meta',amount:amt.value,category:cat||'Reserva',date:date.value,tags,notes,goalId}};
+  return {...r, sanitized:{type:d.type,description:desc||'Reserva para meta',amount:amt.value,category:cat||'Reserva',date:date.value,tags,notes,goalId,recurring:!!d.recurring}};
 }
 
-export async function create(uid,raw) { if(!uid) return {success:false,error:'Não autenticado'}; const v=validate(raw); if(!v.valid) return {success:false,error:Object.values(v.errors)[0]}; try { await Model.create(uid,v.sanitized); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao salvar'}; } }
+export async function create(uid, raw, { monthCount = 0, limit = Infinity } = {}) {
+  if (!uid) return { success: false, error: 'Não autenticado' };
+  if (monthCount >= limit) return { success: false, error: `Limite de ${limit} transações/mês no plano gratuito. Faça upgrade para o Pro.` };
+  const v = validate(raw);
+  if (!v.valid) return { success: false, error: Object.values(v.errors)[0] };
+  try { await Model.create(uid, v.sanitized); return { success: true }; }
+  catch (e) { console.error(e); return { success: false, error: 'Erro ao salvar' }; }
+}
 export async function update(id,raw) { if(!id) return {success:false,error:'ID inválido'}; const v=validate(raw); if(!v.valid) return {success:false,error:Object.values(v.errors)[0]}; try { await Model.update(id,v.sanitized); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao atualizar'}; } }
 export async function remove(id) { if(!id) return {success:false,error:'ID inválido'}; try { await Model.remove(id); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao excluir'}; } }
 export const subscribe = (uid,cb) => Model.subscribe(uid,cb);

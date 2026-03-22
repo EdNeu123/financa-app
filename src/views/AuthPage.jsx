@@ -36,9 +36,9 @@ export default function AuthPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-            <TrendingUp className="w-5 h-5 text-white" />
+            <span className="text-white font-extrabold text-sm font-display">Q</span>
           </div>
-          <span className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Finança</span>
+          <span className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Quanto</span>
         </div>
 
         <div className="card p-7">

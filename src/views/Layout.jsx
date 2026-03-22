@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ArrowLeftRight, Tag, Target, Shield,
   Trophy, BookOpen, LineChart, LogOut, TrendingUp, Menu,
-  ChevronRight, Sun, Moon, X, Bell,
+  ChevronRight, Sun, Moon, X, Bell, Sparkles,
 } from 'lucide-react';
 
 const NAV = [
@@ -15,6 +15,7 @@ const NAV = [
   { id: 'categories',   label: 'Categorias',     icon: Tag },
   { id: 'goals',        label: 'Metas',          icon: Target },
   { id: 'budgets',      label: 'Orçamentos',     icon: Shield },
+  { id: 'insights',     label: 'Insights',       icon: Sparkles },
   { id: 'achievements', label: 'Conquistas',     icon: Trophy },
   { id: 'education',    label: 'Aprender',       icon: BookOpen },
   { id: 'market',       label: 'Mercado',        icon: LineChart },
@@ -35,9 +36,9 @@ export default function Layout({ activePage, setActivePage, children, alerts }) 
     <div className="flex flex-col h-full">
       <div className="px-5 py-5 flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-          <TrendingUp className="w-4 h-4 text-white" />
+          <span className="text-white font-extrabold text-xs font-display">Q</span>
         </div>
-        <span className="text-lg font-bold font-display tracking-tight" style={{ color: 'var(--text-primary)' }}>Finança</span>
+        <span className="text-lg font-bold font-display tracking-tight" style={{ color: 'var(--text-primary)' }}>Quanto</span>
       </div>
 
       <nav className="flex-1 px-3 mt-1 space-y-0.5 overflow-y-auto">

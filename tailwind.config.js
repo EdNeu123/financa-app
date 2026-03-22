@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        display: ['Outfit', 'system-ui', 'sans-serif'],
+        body: ['Outfit', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
     },
