@@ -1,232 +1,158 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from 'recharts';
-import {
-  TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Calendar, ChevronLeft, ChevronRight,
-} from 'lucide-react';
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Calendar, ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import { formatCurrency, getMonthName } from '../utils/formatters';
+import { CategoryBadge } from '../utils/icons';
+import { LEVELS } from '../utils/constants';
 
-function ChartTooltip({ active, payload, label }) {
+function ChartTip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-surface-2 border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
-      <p className="text-gray-400 mb-1">{label}</p>
-      {payload.map((e, i) => (
-        <p key={i} style={{ color: e.color }} className="font-medium">
-          {e.name}: {formatCurrency(e.value)}
-        </p>
-      ))}
+    <div className="card !rounded-lg !p-2.5 !shadow-lg text-xs"><p style={{ color: 'var(--text-muted)' }}>{label}</p>
+      {payload.map((e, i) => <p key={i} style={{ color: e.color }} className="font-medium">{e.name}: {formatCurrency(e.value)}</p>)}
     </div>
   );
 }
 
-export default function Dashboard({ transactions, categories, goals }) {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
-  });
+export default function Dashboard({ transactions, categories, goals, gamification }) {
+  const [month, setMonth] = useState(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`; });
+  const label = useMemo(() => { const [y, m] = month.split('-'); return `${getMonthName(parseInt(m) - 1)} ${y}`; }, [month]);
+  const changeMonth = d => { const [y, m] = month.split('-').map(Number); const dt = new Date(y, m - 1 + d, 1); setMonth(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`); };
 
-  const monthLabel = useMemo(() => {
-    const [y, m] = selectedMonth.split('-');
-    return `${getMonthName(parseInt(m) - 1)} ${y}`;
-  }, [selectedMonth]);
-
-  const changeMonth = (delta) => {
-    const [y, m] = selectedMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 + delta, 1);
-    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-  };
-
-  const monthTx = useMemo(() =>
-    transactions.filter(t => t.date?.startsWith(selectedMonth)),
-    [transactions, selectedMonth]
-  );
-
+  const mtx = useMemo(() => transactions.filter(t => t.date?.startsWith(month)), [transactions, month]);
   const summary = useMemo(() => {
-    const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
-    const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
-    return { income, expense, balance: income - expense };
-  }, [monthTx]);
+    const inc = mtx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+    const exp = mtx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
+    return { income: inc, expense: exp, balance: inc - exp };
+  }, [mtx]);
 
-  const monthlyData = useMemo(() => {
-    const [sy, sm] = selectedMonth.split('-').map(Number);
+  const chartData = useMemo(() => {
+    const [sy, sm] = month.split('-').map(Number);
     return Array.from({ length: 6 }, (_, i) => {
       const d = new Date(sy, sm - 1 - (5 - i), 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const mtx = transactions.filter(t => t.date?.startsWith(key));
-      return {
-        month: getMonthName(d.getMonth()),
-        receitas: mtx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0),
-        despesas: mtx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0),
-      };
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const m = transactions.filter(t => t.date?.startsWith(k));
+      return { month: getMonthName(d.getMonth()), receitas: m.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0), despesas: m.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0) };
     });
-  }, [transactions, selectedMonth]);
+  }, [transactions, month]);
 
-  const categoryData = useMemo(() => {
+  const catData = useMemo(() => {
     const map = {};
-    monthTx.filter(t => t.type === 'expense').forEach(t => {
-      const cat = t.category || 'Outros';
-      map[cat] = (map[cat] || 0) + (t.amount || 0);
-    });
-    return Object.entries(map)
-      .map(([name, value]) => ({
-        name, value,
-        color: categories.find(c => c.name === name)?.color || '#94a3b8',
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [monthTx, categories]);
+    mtx.filter(t => t.type === 'expense').forEach(t => { const c = t.category || 'Outros'; map[c] = (map[c] || 0) + (t.amount || 0); });
+    return Object.entries(map).map(([name, value]) => ({ name, value, color: categories.find(c => c.name === name)?.color || '#94a3b8' })).sort((a, b) => b.value - a.value);
+  }, [mtx, categories]);
 
-  const recent = monthTx.slice(0, 5);
-
-  const goalsProgress = useMemo(() =>
-    goals.map(g => {
-      const saved = transactions.filter(t => t.goalId === g.id && t.type === 'income')
-        .reduce((s, t) => s + (t.amount || 0), 0);
-      return { ...g, saved, progress: g.target > 0 ? Math.min((saved / g.target) * 100, 100) : 0 };
-    }),
-    [goals, transactions]
-  );
+  const level = gamification ? (() => { let cur = LEVELS[0]; for (const l of LEVELS) { if ((gamification.xp || 0) >= l.xpNeeded) cur = l; else break; } return cur; })() : null;
 
   const cards = [
-    { label: 'Receitas', value: summary.income, icon: ArrowUpRight, color: 'text-brand-400', bg: 'bg-brand-500/10', border: 'border-brand-500/20' },
-    { label: 'Despesas', value: summary.expense, icon: ArrowDownRight, color: 'text-danger-400', bg: 'bg-danger-500/10', border: 'border-danger-500/20' },
-    { label: 'Balanço', value: summary.balance,
-      icon: summary.balance >= 0 ? TrendingUp : TrendingDown,
-      color: summary.balance >= 0 ? 'text-brand-400' : 'text-danger-400',
-      bg: summary.balance >= 0 ? 'bg-brand-500/10' : 'bg-danger-500/10',
-      border: summary.balance >= 0 ? 'border-brand-500/20' : 'border-danger-500/20' },
+    { label: 'Receitas', value: summary.income, icon: ArrowUpRight, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    { label: 'Despesas', value: summary.expense, icon: ArrowDownRight, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+    { label: 'Balanço', value: summary.balance, icon: summary.balance >= 0 ? TrendingUp : TrendingDown, color: summary.balance >= 0 ? '#10b981' : '#ef4444', bg: summary.balance >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' },
   ];
 
-  const fadeUp = { initial: { opacity: 0, y: 15 }, animate: { opacity: 1, y: 0 } };
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-display">Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">Visão geral das suas finanças</p>
+          <h1 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Dashboard</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Visão geral das suas finanças</p>
         </div>
-        <div className="flex items-center gap-2 glass-card px-2 py-1.5">
-          <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2 px-3 min-w-[120px] justify-center">
-            <Calendar className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium">{monthLabel}</span>
+        <div className="flex items-center">
+          <div className="card !rounded-xl flex items-center gap-1 px-1 py-1">
+            <button onClick={() => changeMonth(-1)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-muted)' }}><ChevronLeft className="w-4 h-4" /></button>
+            <div className="flex items-center gap-2 px-3 min-w-[110px] justify-center"><Calendar className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} /><span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{label}</span></div>
+            <button onClick={() => changeMonth(1)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-muted)' }}><ChevronRight className="w-4 h-4" /></button>
           </div>
-          <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
+      {/* Gamification strip */}
+      {gamification && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="card p-4 flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: (level?.color || '#94a3b8') + '20' }}>
+              <span className="text-sm font-bold" style={{ color: level?.color }}>{level?.level}</span>
+            </div>
+            <div><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
+          </div>
+          {gamification.streak > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.1)' }}>
+              <Flame className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
+              <span className="text-xs font-semibold" style={{ color: '#f97316' }}>{gamification.streak} dias seguidos</span>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {cards.map((c, i) => (
-          <motion.div key={c.label} {...fadeUp} transition={{ delay: i * 0.1, duration: 0.4 }} className="glass-card p-5">
+          <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-400">{c.label}</span>
-              <div className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} flex items-center justify-center`}>
-                <c.icon className={`w-4 h-4 ${c.color}`} />
-              </div>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{c.label}</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.bg }}><c.icon className="w-4 h-4" style={{ color: c.color }} /></div>
             </div>
-            <p className={`text-2xl font-bold font-mono ${c.color}`}>{formatCurrency(c.value)}</p>
+            <p className="stat-value font-mono" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div {...fadeUp} transition={{ delay: 0.3 }} className="lg:col-span-2 glass-card p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Receitas vs Despesas</h3>
-          <div className="h-[260px]">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 card p-5">
+          <p className="section-title">Receitas vs despesas</p>
+          <div className="h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyData}>
+              <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} /><stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} /><stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
+                  <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.2} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
+                  <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} /><stop offset="100%" stopColor="#ef4444" stopOpacity={0} /></linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#22c55e" fill="url(#gI)" strokeWidth={2} />
-                <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#ef4444" fill="url(#gE)" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTip />} />
+                <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#10b981" fill="url(#gi)" strokeWidth={2} />
+                <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#ef4444" fill="url(#ge)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        <motion.div {...fadeUp} transition={{ delay: 0.4 }} className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Despesas por Categoria</h3>
-          {categoryData.length === 0
-            ? <div className="h-[260px] flex items-center justify-center text-gray-500 text-sm">Sem despesas neste mês</div>
-            : <>
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart><Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
-                    {categoryData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie><Tooltip content={<ChartTooltip />} /></PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-1.5 mt-2 max-h-[80px] overflow-y-auto">
-                {categoryData.slice(0, 4).map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
-                    <span className="text-gray-400 truncate flex-1">{c.name}</span>
-                    <span className="text-gray-300 font-mono">{formatCurrency(c.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </>}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-5">
+          <p className="section-title">Despesas por categoria</p>
+          {catData.length === 0 ? <div className="h-[240px] flex items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>Sem despesas</div> : <>
+            <div className="h-[160px]"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={catData} cx="50%" cy="50%" innerRadius={46} outerRadius={68} dataKey="value" strokeWidth={0}>{catData.map((e, i) => <Cell key={i} fill={e.color} />)}</Pie><Tooltip content={<ChartTip />} /></PieChart></ResponsiveContainer></div>
+            <div className="space-y-2 mt-3">{catData.slice(0, 5).map((c, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} /><span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>{c.name}</span><span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(c.value)}</span></div>
+            ))}</div>
+          </>}
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <motion.div {...fadeUp} transition={{ delay: 0.5 }} className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Transações Recentes</h3>
-          {recent.length === 0
-            ? <p className="text-gray-500 text-sm py-6 text-center">Nenhuma transação neste mês</p>
-            : <div className="space-y-3">{recent.map(tx => {
-              const cat = categories.find(c => c.name === tx.category);
-              return (
-                <div key={tx.id} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                    style={{ backgroundColor: (cat?.color || '#94a3b8') + '15' }}>{cat?.icon || '📦'}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.description}</p>
-                    <p className="text-xs text-gray-500">{tx.category}</p>
-                  </div>
-                  <span className={`text-sm font-mono font-medium ${tx.type === 'income' ? 'text-brand-400' : 'text-danger-400'}`}>
-                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
-                  </span>
-                </div>);
-            })}</div>}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="card p-5">
+          <p className="section-title">Transações recentes</p>
+          {mtx.slice(0, 5).length === 0 ? <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>Nenhuma neste mês</p>
+            : <div className="space-y-3">{mtx.slice(0, 5).map(tx => (
+              <div key={tx.id} className="flex items-center gap-3">
+                <CategoryBadge name={tx.category} size="sm" />
+                <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{tx.description}</p><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{tx.category}</p></div>
+                <span className="text-sm font-mono font-semibold" style={{ color: tx.type === 'income' ? '#10b981' : '#ef4444' }}>{tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}</span>
+              </div>))}</div>}
         </motion.div>
 
-        <motion.div {...fadeUp} transition={{ delay: 0.6 }} className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Metas em Progresso</h3>
-          {goalsProgress.length === 0
-            ? <p className="text-gray-500 text-sm py-6 text-center">Nenhuma meta definida</p>
-            : <div className="space-y-4">{goalsProgress.slice(0, 4).map(g => (
-              <div key={g.id}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium">{g.icon} {g.name}</span>
-                  <span className="text-xs text-gray-400 font-mono">{formatCurrency(g.saved)} / {formatCurrency(g.target)}</span>
-                </div>
-                <div className="h-2 bg-surface-3 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${g.progress}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                    className="h-full rounded-full" style={{ backgroundColor: g.color || '#22c55e' }} />
-                </div>
-              </div>
-            ))}</div>}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="card p-5">
+          <p className="section-title">Metas em progresso</p>
+          {goals.length === 0 ? <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>Nenhuma meta</p>
+            : <div className="space-y-4">{goals.slice(0, 4).map(g => {
+              const saved = transactions.filter(t => t.goalId === g.id && t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+              const pct = g.target > 0 ? Math.min((saved / g.target) * 100, 100) : 0;
+              return (<div key={g.id}>
+                <div className="flex items-center justify-between mb-1.5"><span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{g.name}</span><span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{formatCurrency(saved)} / {formatCurrency(g.target)}</span></div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}><motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ backgroundColor: g.color || '#10b981' }} /></div>
+              </div>);
+            })}</div>}
         </motion.div>
       </div>
     </div>
