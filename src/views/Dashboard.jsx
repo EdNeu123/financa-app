@@ -55,11 +55,11 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Dashboard</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Visão geral das suas finanças</p>
+          <h1 className="text-xl sm:text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>Dashboard</h1>
+          <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Visão geral das suas finanças</p>
         </div>
         <div className="flex items-center">
           <div className="card !rounded-xl flex items-center gap-1 px-1 py-1">
@@ -73,12 +73,12 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
       {/* Gamification strip */}
       {gamification && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="card-glass p-4 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: (level?.color || '#94a3b8') + '15' }}>
-              <span className="text-base font-extrabold" style={{ color: level?.color }}>{level?.level}</span>
+          className="card-glass p-3 sm:p-4 flex items-center gap-3 sm:gap-4 flex-wrap">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center" style={{ background: (level?.color || '#94a3b8') + '15' }}>
+              <span className="text-sm sm:text-base font-extrabold" style={{ color: level?.color }}>{level?.level}</span>
             </div>
-            <div><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
+            <div><p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{level?.title}</p><p className="text-[11px] sm:text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{gamification.xp || 0} XP</p></div>
           </div>
           <div className="flex-1 hidden sm:block">
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
@@ -86,38 +86,38 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
             </div>
           </div>
           {gamification.streak > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.08)' }}>
-              <Flame className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
-              <span className="text-xs font-semibold" style={{ color: '#f97316' }}>{gamification.streak} dias</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg" style={{ background: 'rgba(249,115,22,0.08)' }}>
+              <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ color: '#f97316' }} />
+              <span className="text-[11px] sm:text-xs font-semibold" style={{ color: '#f97316' }}>{gamification.streak} dias</span>
             </div>
           )}
         </motion.div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {cards.map((c, i) => (
           <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            className="stat-card relative overflow-hidden">
+            className="stat-card relative overflow-hidden !p-3.5 sm:!p-5">
             {/* Subtle glow */}
             <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl" style={{ background: c.color, opacity: 0.06 }} />
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: c.color + '12' }}>
-                  <c.icon className="w-4 h-4" style={{ color: c.color }} />
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center" style={{ background: c.color + '12' }}>
+                  <c.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: c.color }} />
                 </div>
               </div>
-              <p className="text-2xl lg:text-3xl font-extrabold font-mono tracking-tight" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
-              <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
+              <p className="text-base sm:text-xl lg:text-2xl font-extrabold font-mono tracking-tight truncate" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
+              <p className="text-[10px] sm:text-[11px] mt-1.5 sm:mt-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 card-glass p-6">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 card-glass p-4 sm:p-6">
           <p className="section-title">Receitas vs despesas</p>
-          <div className="h-[260px]">
+          <div className="h-[220px] sm:h-[260px] -ml-2 sm:ml-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -125,8 +125,8 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
                   <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} /><stop offset="100%" stopColor="#ef4444" stopOpacity={0} /></linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} width={35} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip content={<ChartTip />} />
                 <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#10b981" fill="url(#gi)" strokeWidth={2} />
                 <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#ef4444" fill="url(#ge)" strokeWidth={2} />
@@ -135,7 +135,7 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-5">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-4 sm:p-5">
           <p className="section-title">Despesas por categoria</p>
           {catData.length === 0 ? <div className="h-[240px] flex items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>Sem despesas</div> : <>
             <div className="h-[160px]"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={catData} cx="50%" cy="50%" innerRadius={46} outerRadius={68} dataKey="value" strokeWidth={0}>{catData.map((e, i) => <Cell key={i} fill={e.color} />)}</Pie><Tooltip content={<ChartTip />} /></PieChart></ResponsiveContainer></div>

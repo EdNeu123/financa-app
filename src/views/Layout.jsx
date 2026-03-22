@@ -66,10 +66,6 @@ export default function Layout({ activePage, setActivePage, children, alerts, tr
       </nav>
 
       <div className="px-3 pb-3 space-y-2">
-        <div className="flex items-center gap-2 px-3 py-1">
-          <NotificationCenter transactions={transactions} budgets={budgets} goals={goals} gamification={gamification} />
-          <span className="text-[13px] font-medium" style={{ color: 'var(--text-muted)' }}>Notificações</span>
-        </div>
         <button onClick={toggle}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all"
           style={{ color: 'var(--text-muted)' }}>
@@ -135,7 +131,7 @@ export default function Layout({ activePage, setActivePage, children, alerts, tr
             </button>
           </div>
         </div>
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>
   );

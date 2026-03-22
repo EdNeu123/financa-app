@@ -92,8 +92,8 @@ export default function Market({ userPlan }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1 className="text-2xl font-bold font-display" style={{color:'var(--text-primary)'}}>Mercado</h1><p className="text-sm mt-0.5" style={{color:'var(--text-secondary)'}}>Cotações, sugestões e notícias</p></div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div><h1 className="text-xl sm:text-2xl font-bold font-display" style={{color:'var(--text-primary)'}}>Mercado</h1><p className="text-xs sm:text-sm mt-0.5" style={{color:'var(--text-secondary)'}}>Cotações, sugestões e notícias</p></div>
         <div className="flex items-center gap-3">
           {lastUpdate&&<span className="text-xs" style={{color:'var(--text-muted)'}}>Atualizado {lastUpdate.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>}
           <button onClick={fetchData} disabled={loading} className="btn-ghost flex items-center gap-2 text-sm"><RefreshCw className={`w-4 h-4 ${loading?'animate-spin':''}`}/>{loading?'...':'Atualizar'}</button>
@@ -118,17 +118,44 @@ export default function Market({ userPlan }) {
         </div>
       </div>)}
 
-      {ibov&&(<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="card p-5 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background:(ibov.change>=0?'#10b981':'#ef4444')+'15'}}><BarChart3 className="w-6 h-6" style={{color:ibov.change>=0?'#10b981':'#ef4444'}}/></div>
-        <div><p className="text-xs uppercase tracking-wider" style={{color:'var(--text-muted)'}}>Ibovespa</p><p className="text-2xl font-bold font-mono" style={{color:'var(--text-primary)'}}>{Number(ibov.price).toLocaleString('pt-BR',{maximumFractionDigits:0})}</p></div>
-        <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{background:(ibov.change>=0?'#10b981':'#ef4444')+'15'}}>
-          {ibov.change>=0?<TrendingUp className="w-4 h-4" style={{color:'#10b981'}}/>:<TrendingDown className="w-4 h-4" style={{color:'#ef4444'}}/>}
-          <span className="text-sm font-mono font-semibold" style={{color:ibov.change>=0?'#10b981':'#ef4444'}}>{ibov.change>=0?'+':''}{Number(ibov.change).toFixed(2)}%</span>
+      {ibov&&(<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="card-glass p-5 sm:p-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]">
+          <svg width="100%" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none">
+            <path d={`M0,80 C50,${ibov.change>=0?'70':'85'} 100,${ibov.change>=0?'60':'80'} 150,${ibov.change>=0?'50':'75'} S250,${ibov.change>=0?'30':'60'} 300,${ibov.change>=0?'25':'55'} S380,${ibov.change>=0?'15':'50'} 400,${ibov.change>=0?'10':'45'}`} fill="none" stroke={ibov.change>=0?'#10b981':'#ef4444'} strokeWidth="3"/>
+          </svg>
+        </div>
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background:(ibov.change>=0?'#10b981':'#ef4444')+'15'}}><BarChart3 className="w-6 h-6" style={{color:ibov.change>=0?'#10b981':'#ef4444'}}/></div>
+            <div>
+              <p className="text-xs uppercase tracking-wider" style={{color:'var(--text-muted)'}}>Índice Ibovespa</p>
+              <p className="text-2xl sm:text-3xl font-extrabold font-mono" style={{color:'var(--text-primary)'}}>{Number(ibov.price).toLocaleString('pt-BR',{maximumFractionDigits:0})}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl" style={{background:(ibov.change>=0?'#10b981':'#ef4444')+'12'}}>
+              {ibov.change>=0?<TrendingUp className="w-5 h-5" style={{color:'#10b981'}}/>:<TrendingDown className="w-5 h-5" style={{color:'#ef4444'}}/>}
+              <span className="text-base font-mono font-bold" style={{color:ibov.change>=0?'#10b981':'#ef4444'}}>{ibov.change>=0?'+':''}{Number(ibov.change).toFixed(2)}%</span>
+            </div>
+          </div>
+        </div>
+        {/* Mini decorative chart */}
+        <div className="mt-4 h-[60px] relative">
+          <svg width="100%" height="100%" viewBox="0 0 400 60" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="ibov-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={ibov.change>=0?'#10b981':'#ef4444'} stopOpacity="0.15"/>
+                <stop offset="100%" stopColor={ibov.change>=0?'#10b981':'#ef4444'} stopOpacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d={`M0,50 C30,48 60,45 100,42 S160,35 200,30 S260,22 300,18 S360,12 400,${ibov.change>=0?'8':'25'} L400,60 L0,60 Z`} fill="url(#ibov-fill)"/>
+            <path d={`M0,50 C30,48 60,45 100,42 S160,35 200,30 S260,22 300,18 S360,12 400,${ibov.change>=0?'8':'25'}`} fill="none" stroke={ibov.change>=0?'#10b981':'#ef4444'} strokeWidth="2" opacity="0.6"/>
+          </svg>
         </div>
       </motion.div>)}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.1}} className="lg:col-span-2 card p-5">
+        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.1}} className="lg:col-span-2 card p-3 sm:p-5">
           <p className="section-title">Cotações</p>
           {stocks.length===0?<p className="text-sm py-8 text-center" style={{color:'var(--text-muted)'}}>{loading?'Carregando...':'Configure o token para ver cotações'}</p>:(
             <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr style={{borderBottom:'1px solid var(--border)'}}>
@@ -145,7 +172,7 @@ export default function Market({ userPlan }) {
               </tr>))}</tbody></table></div>)}
         </motion.div>
 
-        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2}} className="card p-5">
+        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2}} className="card p-3 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {aiPicks?<Brain className="w-4 h-4" style={{color:'#8b5cf6'}}/>:<Zap className="w-4 h-4" style={{color:'var(--accent)'}}/>}
@@ -176,13 +203,13 @@ export default function Market({ userPlan }) {
       </div>
 
       {/* News - Google News search links */}
-      <div className="card p-5">
+      <div className="card p-3 sm:p-5">
         <div className="flex items-center gap-2 mb-2"><Globe className="w-4 h-4" style={{color:'var(--accent)'}}/><p className="section-title !mb-0">Notícias do mercado</p></div>
         <p className="text-xs mb-4" style={{color:'var(--text-muted)'}}>Cada card abre as notícias mais recentes sobre o tema</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {NEWS_TOPICS.map((n,i)=>(
             <motion.a key={i} href={buildNewsUrl(n.query)} target="_blank" rel="noopener noreferrer" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}
-              className="card !p-4 flex items-center gap-3 group cursor-pointer hover:shadow-md transition-all">
+              className="card !p-3 sm:!p-4 flex items-center gap-3 group cursor-pointer hover:shadow-md transition-all">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:'var(--accent-light)'}}><Search className="w-4 h-4" style={{color:'var(--accent)'}}/></div>
               <div className="flex-1 min-w-0"><p className="text-sm font-medium group-hover:underline" style={{color:'var(--text-primary)'}}>{n.title}</p><p className="text-xs mt-0.5" style={{color:'var(--text-muted)'}}>{n.cat}</p></div>
               <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{color:'var(--text-muted)'}}/>

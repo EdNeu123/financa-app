@@ -85,12 +85,15 @@
   .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 1.25rem;
+    padding: 0.875rem;
     transition: all 0.25s ease;
+  }
+  @media (min-width: 640px) {
+    .stat-card { padding: 1.25rem; border-radius: 18px; }
   }
   .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
   .input-field {

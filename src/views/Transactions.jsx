@@ -114,9 +114,9 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1 className="text-2xl font-bold font-display" style={{color:'var(--text-primary)'}}>Transações</h1><p className="text-sm mt-0.5" style={{color:'var(--text-secondary)'}}>{filtered.length} registro{filtered.length!==1?'s':''}</p></div>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div><h1 className="text-xl sm:text-2xl font-bold font-display" style={{color:'var(--text-primary)'}}>Transações</h1><p className="text-xs sm:text-sm mt-0.5" style={{color:'var(--text-secondary)'}}>{filtered.length} registro{filtered.length!==1?'s':''}</p></div>
         <div className="flex gap-2">
           <button onClick={handleExport} className="btn-ghost flex items-center gap-2 text-sm"><Download className="w-4 h-4"/>CSV</button>
           <button onClick={()=>{setEditItem(null);setShowModal(true);}} className="btn-primary flex items-center gap-2 text-sm"><Plus className="w-4 h-4"/>Nova</button>
@@ -124,14 +124,14 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{color:'var(--text-muted)'}}/><input type="text" className="input-field pl-11" placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)} maxLength={100}/></div>
-        <div className="flex gap-2 flex-wrap">{[{id:'all',l:'Todos'},{id:'income',l:'Receitas'},{id:'expense',l:'Despesas'},{id:'savings',l:'Guardado'}].map(f=>(<button key={f.id} onClick={()=>setTypeFilter(f.id)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all" style={{background:typeFilter===f.id?'var(--accent-light)':'var(--bg-secondary)',color:typeFilter===f.id?'var(--accent)':'var(--text-secondary)',border:`1px solid ${typeFilter===f.id?'var(--accent)':'var(--border)'}`}}>{f.l}</button>))}</div>
+        <div className="flex gap-2 flex-wrap">{[{id:'all',l:'Todos'},{id:'income',l:'Receitas'},{id:'expense',l:'Despesas'},{id:'savings',l:'Guardado'}].map(f=>(<button key={f.id} onClick={()=>setTypeFilter(f.id)} className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all" style={{background:typeFilter===f.id?'var(--accent-light)':'var(--bg-secondary)',color:typeFilter===f.id?'var(--accent)':'var(--text-secondary)',border:`1px solid ${typeFilter===f.id?'var(--accent)':'var(--border)'}`}}>{f.l}</button>))}</div>
       </div>
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filtered.length===0?(<motion.div initial={{opacity:0}} animate={{opacity:1}} className="card p-12 text-center"><p className="text-lg" style={{color:'var(--text-muted)'}}>Nenhuma transação</p></motion.div>)
           :filtered.map((tx,i)=>{
             const linkedGoal = tx.goalId ? goals?.find(g=>g.id===tx.goalId) : null;
-            return (<motion.div key={tx.id} layout initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,x:-20}} transition={{delay:Math.min(i*0.02,0.2)}} className="card p-4 flex items-center gap-4 group">
+            return (<motion.div key={tx.id} layout initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,x:-20}} transition={{delay:Math.min(i*0.02,0.2)}} className="card p-3 sm:p-4 flex items-center gap-3 sm:gap-4 group">
               <CategoryBadge name={tx.category}/>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2"><p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>{tx.description}</p>
@@ -141,7 +141,7 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
                 </div>
                 <div className="flex items-center gap-2 mt-0.5"><span className="text-xs" style={{color:'var(--text-muted)'}}>{tx.category}</span><span style={{color:'var(--border)'}}>·</span><span className="text-xs" style={{color:'var(--text-muted)'}}>{formatDate(tx.date)}</span></div>
               </div>
-              <span className="text-sm font-mono font-semibold whitespace-nowrap" style={{color:tx.type==='income'?'#10b981':tx.type==='savings'?'#8b5cf6':'#ef4444'}}>{tx.type==='income'?'+':tx.type==='savings'?'→':'-'}{formatCurrency(tx.amount)}</span>
+              <span className="text-xs sm:text-sm font-mono font-semibold whitespace-nowrap" style={{color:tx.type==='income'?'#10b981':tx.type==='savings'?'#8b5cf6':'#ef4444'}}>{tx.type==='income'?'+':tx.type==='savings'?'→':'-'}{formatCurrency(tx.amount)}</span>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={()=>{setEditItem(tx);setShowModal(true);}} className="p-2 rounded-lg transition-all" style={{color:'var(--text-muted)'}}><Pencil className="w-3.5 h-3.5"/></button>
                 <button onClick={()=>{if(confirm('Excluir?'))onDelete(tx.id);}} className="p-2 rounded-lg transition-all" style={{color:'var(--text-muted)'}}><Trash2 className="w-3.5 h-3.5"/></button>

@@ -66,7 +66,7 @@ export default function NotificationCenter({ transactions, budgets, goals, gamif
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            className="absolute right-0 top-12 w-[340px] max-h-[480px] overflow-y-auto rounded-2xl border z-50"
+            className="absolute right-0 top-12 w-[calc(100vw-2rem)] sm:w-[340px] max-h-[480px] overflow-y-auto rounded-2xl border z-50"
             style={{ background: 'var(--bg-card-solid, var(--bg-card))', borderColor: 'var(--border)', boxShadow: 'var(--shadow-lg)' }}>
 
             <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)', background: 'var(--bg-card-solid, var(--bg-card))' }}>
