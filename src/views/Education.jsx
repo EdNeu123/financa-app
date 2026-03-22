@@ -4,15 +4,15 @@ import { BookOpen, Play, ExternalLink, Clock, Star, TrendingUp, Shield, PiggyBan
 
 const ARTICLES = [
   { id: 1, title: 'Reserva de emergência: quanto guardar e onde investir', category: 'Fundamentos', readTime: 8, icon: Shield, color: '#10b981', url: 'https://www.infomoney.com.br/guias/reserva-de-emergencia/' },
-  { id: 2, title: 'Regra 50-30-20: como dividir seu salário', category: 'Orçamento', readTime: 5, icon: Wallet, color: '#3b82f6', url: 'https://www.nubank.com.br/blog/regra-50-30-20/' },
-  { id: 3, title: 'Como começar a investir com pouco dinheiro', category: 'Investimentos', readTime: 10, icon: TrendingUp, color: '#8b5cf6', url: 'https://www.infomoney.com.br/guias/como-comecar-a-investir/' },
-  { id: 4, title: 'CDB, LCI, LCA: entenda a renda fixa', category: 'Renda Fixa', readTime: 12, icon: Landmark, color: '#06b6d4', url: 'https://www.btgpactualdigital.com/blog/investimentos/renda-fixa' },
+  { id: 2, title: 'Regra 50-30-20: como dividir seu salário', category: 'Orçamento', readTime: 5, icon: Wallet, color: '#3b82f6', url: 'https://www.serasa.com.br/ensina/dicas/regra-50-30-20/' },
+  { id: 3, title: 'Como começar a investir com pouco dinheiro', category: 'Investimentos', readTime: 10, icon: TrendingUp, color: '#8b5cf6', url: 'https://www.b3.com.br/pt_br/educacao/' },
+  { id: 4, title: 'CDB, LCI, LCA: entenda a renda fixa', category: 'Renda Fixa', readTime: 12, icon: Landmark, color: '#06b6d4', url: 'https://www.b3.com.br/pt_br/educacao/cursos/renda-fixa/' },
   { id: 5, title: 'Tesouro Direto: guia completo para iniciantes', category: 'Renda Fixa', readTime: 15, icon: Shield, color: '#14b8a6', url: 'https://www.tesourodireto.com.br/conheca/conheca-o-tesouro-direto.htm' },
-  { id: 6, title: 'Como sair das dívidas: passo a passo prático', category: 'Fundamentos', readTime: 7, icon: Target, color: '#ef4444', url: 'https://www.serasa.com.br/ensina/dicas/como-sair-das-dividas/' },
-  { id: 7, title: 'ETFs: o que são e como investir', category: 'Investimentos', readTime: 10, icon: BarChart3, color: '#6366f1', url: 'https://www.infomoney.com.br/guias/etf/' },
-  { id: 8, title: 'Juros compostos: a 8ª maravilha do mundo', category: 'Fundamentos', readTime: 6, icon: TrendingUp, color: '#22c55e', url: 'https://www.nubank.com.br/blog/juros-compostos/' },
-  { id: 9, title: 'FIIs: como investir em fundos imobiliários', category: 'Investimentos', readTime: 14, icon: PiggyBank, color: '#f97316', url: 'https://www.infomoney.com.br/guias/fundos-imobiliarios/' },
-  { id: 10, title: 'Planejamento financeiro pessoal: por onde começar', category: 'Fundamentos', readTime: 8, icon: Wallet, color: '#ec4899', url: 'https://www.serasa.com.br/ensina/dicas/planejamento-financeiro/' },
+  { id: 6, title: 'Como sair das dívidas: passo a passo prático', category: 'Fundamentos', readTime: 7, icon: Target, color: '#ef4444', url: 'https://www.serasa.com.br/limpa-nome-online/' },
+  { id: 7, title: 'ETFs: o que são e como investir', category: 'Investimentos', readTime: 10, icon: BarChart3, color: '#6366f1', url: 'https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/etf/' },
+  { id: 8, title: 'Juros compostos: o poder dos rendimentos', category: 'Fundamentos', readTime: 6, icon: TrendingUp, color: '#22c55e', url: 'https://www.bcb.gov.br/cidadaniafinanceira' },
+  { id: 9, title: 'FIIs: como investir em fundos imobiliários', category: 'Investimentos', readTime: 14, icon: PiggyBank, color: '#f97316', url: 'https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/fundos-de-investimento-imobiliario-fii.htm' },
+  { id: 10, title: 'Planejamento financeiro pessoal: por onde começar', category: 'Fundamentos', readTime: 8, icon: Wallet, color: '#ec4899', url: 'https://www.bcb.gov.br/cidadaniafinanceira/educacaofinanceira' },
 ];
 
 const VIDEOS = [

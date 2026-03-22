@@ -43,7 +43,7 @@ export function sanitizeTags(tags) {
   return [...new Set(tags.map(sanitizeTag).filter(t=>t.length>0))].slice(0, LIMITS.TAGS_MAX);
 }
 
-export const isValidTxType = t => ['income','expense'].includes(t);
+export const isValidTxType = t => ['income','expense','savings'].includes(t);
 export const isValidCatType = t => ['income','expense','both'].includes(t);
 export const isValidHexColor = c => typeof c==='string' && /^#[0-9a-fA-F]{6}$/.test(c);
 

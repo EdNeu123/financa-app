@@ -6,14 +6,17 @@ function validate(d) {
   const desc = sanitizeString(d.description,LIMITS.STRING_MAX_MEDIUM);
   const descErr = desc.length<2?'Descrição: mínimo 2 caracteres':null;
   const amt = sanitizeAmount(d.amount);
-  const cat = sanitizeString(d.category,LIMITS.STRING_MAX_SHORT);
-  const catErr = cat.length===0?'Selecione uma categoria':null;
+  const cat = sanitizeString(d.category||'',LIMITS.STRING_MAX_SHORT);
+  // Category obrigatória para income/expense, opcional para savings
+  const catErr = d.type!=='savings'&&cat.length===0?'Selecione uma categoria':null;
   const date = sanitizeDate(d.date);
   const tags = sanitizeTags(d.tags);
   const notes = sanitizeString(d.notes||'',LIMITS.STRING_MAX_LONG);
   const goalId = d.goalId?sanitizeString(d.goalId,LIMITS.STRING_MAX_SHORT):null;
-  const r = validationResult({type:typeErr,description:descErr,amount:amt.valid?null:amt.error,category:catErr,date:date.valid?null:date.error});
-  return {...r, sanitized:{type:d.type,description:desc,amount:amt.value,category:cat,date:date.value,tags,notes,goalId}};
+  // Savings DEVE ter goalId
+  const goalErr = d.type==='savings'&&!goalId?'Selecione uma meta para guardar':null;
+  const r = validationResult({type:typeErr,description:descErr,amount:amt.valid?null:amt.error,category:catErr,date:date.valid?null:date.error,goal:goalErr});
+  return {...r, sanitized:{type:d.type,description:desc||'Reserva para meta',amount:amt.value,category:cat||'Reserva',date:date.value,tags,notes,goalId}};
 }
 
 export async function create(uid,raw) { if(!uid) return {success:false,error:'Não autenticado'}; const v=validate(raw); if(!v.valid) return {success:false,error:Object.values(v.errors)[0]}; try { await Model.create(uid,v.sanitized); return {success:true}; } catch(e) { console.error(e); return {success:false,error:'Erro ao salvar'}; } }

@@ -24,7 +24,8 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
   const summary = useMemo(() => {
     const inc = mtx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
     const exp = mtx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
-    return { income: inc, expense: exp, balance: inc - exp };
+    const saved = mtx.filter(t => t.type === 'savings').reduce((s, t) => s + (t.amount || 0), 0);
+    return { income: inc, expense: exp, saved, available: inc - exp - saved };
   }, [mtx]);
 
   const chartData = useMemo(() => {
@@ -48,7 +49,8 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
   const cards = [
     { label: 'Receitas', value: summary.income, icon: ArrowUpRight, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
     { label: 'Despesas', value: summary.expense, icon: ArrowDownRight, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-    { label: 'Balanço', value: summary.balance, icon: summary.balance >= 0 ? TrendingUp : TrendingDown, color: summary.balance >= 0 ? '#10b981' : '#ef4444', bg: summary.balance >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' },
+    { label: 'Guardado', value: summary.saved, icon: TrendingUp, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+    { label: 'Disponível', value: summary.available, icon: summary.available >= 0 ? TrendingUp : TrendingDown, color: summary.available >= 0 ? '#10b981' : '#ef4444', bg: summary.available >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' },
   ];
 
   return (
@@ -86,7 +88,7 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {cards.map((c, i) => (
           <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="card p-5">
             <div className="flex items-center justify-between mb-3">
@@ -146,7 +148,7 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
           <p className="section-title">Metas em progresso</p>
           {goals.length === 0 ? <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>Nenhuma meta</p>
             : <div className="space-y-4">{goals.slice(0, 4).map(g => {
-              const saved = transactions.filter(t => t.goalId === g.id && t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+              const saved = transactions.filter(t => t.goalId === g.id && t.type === 'savings').reduce((s, t) => s + (t.amount || 0), 0);
               const pct = g.target > 0 ? Math.min((saved / g.target) * 100, 100) : 0;
               return (<div key={g.id}>
                 <div className="flex items-center justify-between mb-1.5"><span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{g.name}</span><span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{formatCurrency(saved)} / {formatCurrency(g.target)}</span></div>

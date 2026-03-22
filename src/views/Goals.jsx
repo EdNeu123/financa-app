@@ -39,7 +39,7 @@ export default function Goals({ goals, transactions, onAdd, onUpdate, onDelete }
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const gp = useMemo(()=>goals.map(g=>{
-    const saved = transactions.filter(t=>t.goalId===g.id).reduce((s,t)=>s+(t.type==='income'?(t.amount||0):-(t.amount||0)),0);
+    const saved = transactions.filter(t=>t.goalId===g.id&&t.type==='savings').reduce((s,t)=>s+(t.amount||0),0);
     const ss = Math.max(saved,0); const pct = g.target>0?Math.min((ss/g.target)*100,100):0;
     let dl=null; if(g.deadline){const diff=new Date(g.deadline+'T00:00:00')-new Date();dl=Math.max(Math.ceil(diff/864e5),0);}
     return {...g, saved:ss, progress:pct, remaining:Math.max(g.target-ss,0), daysLeft:dl};

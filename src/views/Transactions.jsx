@@ -34,18 +34,31 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories, goals
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="flex gap-2 p-1 rounded-xl" style={{background:'var(--bg-tertiary)'}}>
-            {['expense','income'].map(t=>(
-              <button key={t} type="button" onClick={()=>setForm(f=>({...f,type:t,category:'',goalId:t==='expense'?null:f.goalId}))}
+            {[{id:'expense',label:'Despesa',color:'#ef4444'},{id:'income',label:'Receita',color:'#10b981'},{id:'savings',label:'Guardar',color:'#8b5cf6'}].map(t=>(
+              <button key={t.id} type="button" onClick={()=>setForm(f=>({...f,type:t.id,category:t.id==='savings'?'Reserva':f.category,goalId:t.id==='expense'?null:f.goalId}))}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-                style={{background:form.type===t?(t==='expense'?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)'):'transparent',color:form.type===t?(t==='expense'?'#ef4444':'#10b981'):'var(--text-muted)'}}>
-                {t==='expense'?'Despesa':'Receita'}
+                style={{background:form.type===t.id?t.color+'20':'transparent',color:form.type===t.id?t.color:'var(--text-muted)'}}>
+                {t.label}
               </button>))}
           </div>
+          {form.type==='savings'&&(
+            <div className="p-3 rounded-xl text-xs leading-relaxed" style={{background:'rgba(139,92,246,0.08)',color:'#8b5cf6'}}>
+              O valor será reservado para a meta selecionada e descontado do seu saldo disponível.
+            </div>
+          )}
+          {/* Goal selector — obrigatório para savings, opcional para income */}
+          {(form.type==='savings'||form.type==='income')&&goals.length>0&&(
+            <div><label className="text-xs mb-1.5 block flex items-center gap-1.5" style={{color:'var(--text-muted)'}}><Target className="w-3.5 h-3.5"/>{form.type==='savings'?'Meta (obrigatório)':'Vincular a meta (opcional)'}</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {form.type!=='savings'&&<button type="button" onClick={()=>setForm(f=>({...f,goalId:null}))} className="flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all" style={{borderColor:!form.goalId?'var(--accent)':'var(--border)',background:!form.goalId?'var(--accent-light)':'var(--bg-secondary)',color:!form.goalId?'var(--accent)':'var(--text-muted)'}}>Nenhuma</button>}
+                {goals.map(g=>(<button key={g.id} type="button" onClick={()=>setForm(f=>({...f,goalId:g.id}))} className="flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all truncate" style={{borderColor:form.goalId===g.id?'#8b5cf6':'var(--border)',background:form.goalId===g.id?'rgba(139,92,246,0.1)':'var(--bg-secondary)',color:form.goalId===g.id?'#8b5cf6':'var(--text-secondary)'}}>{g.name}</button>))}
+              </div></div>)}
           <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Descrição</label><input type="text" className="input-field" placeholder="Ex: Supermercado..." value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} maxLength={LIMITS.STRING_MAX_MEDIUM} required/></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Valor (R$)</label><input type="number" className="input-field font-mono" placeholder="0,00" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} min={LIMITS.AMOUNT_MIN} max={LIMITS.AMOUNT_MAX} step="0.01" required/></div>
             <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Data</label><input type="date" className="input-field" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} min="2000-01-01" required/></div>
           </div>
+          {form.type!=='savings'&&(
           <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Categoria</label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">{filteredCats.map(cat=>(
               <button key={cat.name} type="button" onClick={()=>setForm(f=>({...f,category:cat.name}))}
@@ -53,13 +66,7 @@ function TransactionModal({ isOpen, onClose, onSave, editData, categories, goals
                 style={{borderColor:form.category===cat.name?'var(--accent)':'var(--border)',background:form.category===cat.name?'var(--accent-light)':'var(--bg-secondary)',color:form.category===cat.name?'var(--accent)':'var(--text-secondary)'}}>
                 <CategoryBadge name={cat.name} size="sm" color={cat.color}/><span className="truncate w-full text-center">{cat.name}</span>
               </button>))}</div>
-          </div>
-          {form.type==='income'&&goals.length>0&&(
-            <div><label className="text-xs mb-1.5 block flex items-center gap-1.5" style={{color:'var(--text-muted)'}}><Target className="w-3.5 h-3.5"/>Vincular a meta (opcional)</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <button type="button" onClick={()=>setForm(f=>({...f,goalId:null}))} className="flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all" style={{borderColor:!form.goalId?'var(--accent)':'var(--border)',background:!form.goalId?'var(--accent-light)':'var(--bg-secondary)',color:!form.goalId?'var(--accent)':'var(--text-muted)'}}>Nenhuma</button>
-                {goals.map(g=>(<button key={g.id} type="button" onClick={()=>setForm(f=>({...f,goalId:g.id}))} className="flex items-center gap-2 p-2.5 rounded-xl border text-xs transition-all truncate" style={{borderColor:form.goalId===g.id?'var(--accent)':'var(--border)',background:form.goalId===g.id?'var(--accent-light)':'var(--bg-secondary)',color:form.goalId===g.id?'var(--accent)':'var(--text-secondary)'}}>{g.name}</button>))}
-              </div></div>)}
+          </div>)}
           <div><label className="text-xs mb-1.5 block" style={{color:'var(--text-muted)'}}>Tags</label>
             <div className="flex flex-wrap gap-1.5 mb-2">{form.tags.map(tag=>(<span key={tag} className="badge text-xs" style={{background:'var(--accent-light)',color:'var(--accent)',borderColor:'transparent'}}>{tag}<button type="button" onClick={()=>setForm(f=>({...f,tags:f.tags.filter(t=>t!==tag)}))}><X className="w-3 h-3"/></button></span>))}</div>
             <input type="text" className="input-field" placeholder="Adicionar tag..." value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTag(tagInput);}}} maxLength={LIMITS.TAG_LENGTH_MAX}/>
@@ -106,7 +113,7 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{color:'var(--text-muted)'}}/><input type="text" className="input-field pl-11" placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)} maxLength={100}/></div>
-        <div className="flex gap-2">{[{id:'all',l:'Todos'},{id:'income',l:'Receitas'},{id:'expense',l:'Despesas'}].map(f=>(<button key={f.id} onClick={()=>setTypeFilter(f.id)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all" style={{background:typeFilter===f.id?'var(--accent-light)':'var(--bg-secondary)',color:typeFilter===f.id?'var(--accent)':'var(--text-secondary)',border:`1px solid ${typeFilter===f.id?'var(--accent)':'var(--border)'}`}}>{f.l}</button>))}</div>
+        <div className="flex gap-2 flex-wrap">{[{id:'all',l:'Todos'},{id:'income',l:'Receitas'},{id:'expense',l:'Despesas'},{id:'savings',l:'Guardado'}].map(f=>(<button key={f.id} onClick={()=>setTypeFilter(f.id)} className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all" style={{background:typeFilter===f.id?'var(--accent-light)':'var(--bg-secondary)',color:typeFilter===f.id?'var(--accent)':'var(--text-secondary)',border:`1px solid ${typeFilter===f.id?'var(--accent)':'var(--border)'}`}}>{f.l}</button>))}</div>
       </div>
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
@@ -122,7 +129,7 @@ export default function Transactions({ transactions, categories, goals, onAdd, o
                 </div>
                 <div className="flex items-center gap-2 mt-0.5"><span className="text-xs" style={{color:'var(--text-muted)'}}>{tx.category}</span><span style={{color:'var(--border)'}}>·</span><span className="text-xs" style={{color:'var(--text-muted)'}}>{formatDate(tx.date)}</span></div>
               </div>
-              <span className="text-sm font-mono font-semibold whitespace-nowrap" style={{color:tx.type==='income'?'#10b981':'#ef4444'}}>{tx.type==='income'?'+':'-'}{formatCurrency(tx.amount)}</span>
+              <span className="text-sm font-mono font-semibold whitespace-nowrap" style={{color:tx.type==='income'?'#10b981':tx.type==='savings'?'#8b5cf6':'#ef4444'}}>{tx.type==='income'?'+':tx.type==='savings'?'→':'-'}{formatCurrency(tx.amount)}</span>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={()=>{setEditItem(tx);setShowModal(true);}} className="p-2 rounded-lg transition-all" style={{color:'var(--text-muted)'}}><Pencil className="w-3.5 h-3.5"/></button>
                 <button onClick={()=>{if(confirm('Excluir?'))onDelete(tx.id);}} className="p-2 rounded-lg transition-all" style={{color:'var(--text-muted)'}}><Trash2 className="w-3.5 h-3.5"/></button>
