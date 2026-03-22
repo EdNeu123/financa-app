@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, RefreshCw, ExternalLink, AlertTriangle, Globe, BarChart3, Zap, Info, X, Search, Brain } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { TrendingUp, TrendingDown, RefreshCw, ExternalLink, AlertTriangle, Globe, BarChart3, Zap, Info, X, Search, Brain, Calendar } from 'lucide-react';
 
 const TRACKED = ['PETR4','VALE3','ITUB4','BBDC4','ABEV3','WEGE3','BBAS3','RENT3','SUZB3','HAPV3'];
 
@@ -35,6 +36,7 @@ export default function Market({ userPlan }) {
   const [showMethod, setShowMethod] = useState(false);
   const [aiPicks, setAiPicks] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [ibovHistory, setIbovHistory] = useState([]);
   const hasGemini = isGeminiConfigured();
 
   const fetchAiAnalysis = async (stockData) => {
@@ -72,12 +74,25 @@ export default function Market({ userPlan }) {
       }
       if (results.length > 0) setStocks(results);
 
-      // Fetch IBOV
+      // Fetch IBOV + historical
       try {
         await new Promise(r => setTimeout(r, 300));
-        const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}`);
-        if(ir.ok){const ib=await ir.json();if(ib.results?.[0])setIbov({price:ib.results[0].regularMarketPrice,change:ib.results[0].regularMarketChangePercent});}
-      } catch{}
+        const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}&range=1mo&interval=1d`);
+        if (ir.ok) {
+          const ib = await ir.json();
+          if (ib.results?.[0]) {
+            setIbov({ price: ib.results[0].regularMarketPrice, change: ib.results[0].regularMarketChangePercent });
+            // Extract historical prices
+            const hist = ib.results[0].historicalDataPrice;
+            if (hist?.length) {
+              setIbovHistory(hist.map(h => ({
+                date: new Date(h.date * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+                price: Math.round(h.close),
+              })));
+            }
+          }
+        }
+      } catch {}
 
       if (results.length === 0) setError('Nenhuma cotação carregada. Verifique o token da API.');
       else setLastUpdate(new Date());
@@ -139,19 +154,26 @@ export default function Market({ userPlan }) {
             </div>
           </div>
         </div>
-        {/* Mini decorative chart */}
-        <div className="mt-4 h-[60px] relative">
-          <svg width="100%" height="100%" viewBox="0 0 400 60" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="ibov-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={ibov.change>=0?'#10b981':'#ef4444'} stopOpacity="0.15"/>
-                <stop offset="100%" stopColor={ibov.change>=0?'#10b981':'#ef4444'} stopOpacity="0"/>
-              </linearGradient>
-            </defs>
-            <path d={`M0,50 C30,48 60,45 100,42 S160,35 200,30 S260,22 300,18 S360,12 400,${ibov.change>=0?'8':'25'} L400,60 L0,60 Z`} fill="url(#ibov-fill)"/>
-            <path d={`M0,50 C30,48 60,45 100,42 S160,35 200,30 S260,22 300,18 S360,12 400,${ibov.change>=0?'8':'25'}`} fill="none" stroke={ibov.change>=0?'#10b981':'#ef4444'} strokeWidth="2" opacity="0.6"/>
-          </svg>
-        </div>
+        {/* Chart from real historical data */}
+        {ibovHistory.length > 0 && (
+          <div className="mt-4 h-[120px] sm:h-[160px] -ml-4 -mr-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={ibovHistory}>
+                <defs>
+                  <linearGradient id="ibov-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={ibov.change >= 0 ? '#10b981' : '#ef4444'} stopOpacity={0.2} />
+                    <stop offset="100%" stopColor={ibov.change >= 0 ? '#10b981' : '#ef4444'} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} width={45} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={{ background: 'var(--bg-card-solid, var(--bg-card))', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} labelStyle={{ color: 'var(--text-muted)' }} formatter={(v) => [`${Number(v).toLocaleString('pt-BR')} pts`, 'Ibovespa']} />
+                <Area type="monotone" dataKey="price" stroke={ibov.change >= 0 ? '#10b981' : '#ef4444'} fill="url(#ibov-grad)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </motion.div>)}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -204,14 +226,24 @@ export default function Market({ userPlan }) {
 
       {/* News - Google News search links */}
       <div className="card p-3 sm:p-5">
-        <div className="flex items-center gap-2 mb-2"><Globe className="w-4 h-4" style={{color:'var(--accent)'}}/><p className="section-title !mb-0">Notícias do mercado</p></div>
-        <p className="text-xs mb-4" style={{color:'var(--text-muted)'}}>Cada card abre as notícias mais recentes sobre o tema</p>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2"><Globe className="w-4 h-4" style={{color:'var(--accent)'}}/><p className="section-title !mb-0">Notícias do mercado</p></div>
+          <span className="text-[11px] flex items-center gap-1" style={{color:'var(--text-muted)'}}><Calendar className="w-3 h-3"/>{new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>
+        </div>
+        <p className="text-xs mb-4" style={{color:'var(--text-muted)'}}>Clique para ver as notícias mais recentes sobre cada tema</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {NEWS_TOPICS.map((n,i)=>(
             <motion.a key={i} href={buildNewsUrl(n.query)} target="_blank" rel="noopener noreferrer" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:i*0.05}}
               className="card !p-3 sm:!p-4 flex items-center gap-3 group cursor-pointer hover:shadow-md transition-all">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:'var(--accent-light)'}}><Search className="w-4 h-4" style={{color:'var(--accent)'}}/></div>
-              <div className="flex-1 min-w-0"><p className="text-sm font-medium group-hover:underline" style={{color:'var(--text-primary)'}}>{n.title}</p><p className="text-xs mt-0.5" style={{color:'var(--text-muted)'}}>{n.cat}</p></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium group-hover:underline" style={{color:'var(--text-primary)'}}>{n.title}</p>
+                <p className="text-[11px] mt-0.5 flex items-center gap-2" style={{color:'var(--text-muted)'}}>
+                  <span>{n.cat}</span>
+                  <span>·</span>
+                  <span>Atualizado hoje</span>
+                </p>
+              </div>
               <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{color:'var(--text-muted)'}}/>
             </motion.a>))}
         </div>

@@ -1,14 +1,14 @@
 /**
- * Gemini API client com cache, rate limiting e retry.
- * Usa gemini-2.0-flash-lite (30 RPM free tier vs 15 do flash).
+ * Gemini API client — mesmo padrão do mega-sena-mvc que funciona.
+ * Usa systemInstruction separado + contents curto + gemini-2.0-flash.
  */
 
-const MODEL = 'gemini-2.0-flash-lite';
+const MODEL = 'gemini-2.0-flash';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-// Cache em memória — evita chamadas repetidas
+// Cache em memória — 30 min
 const cache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 min
+const CACHE_TTL = 30 * 60 * 1000;
 
 function getCached(key) {
   const entry = cache.get(key);
@@ -21,64 +21,63 @@ function setCache(key, data) {
   cache.set(key, { data, ts: Date.now() });
 }
 
-// Rate limiter — mín 10s entre chamadas + cooldown após 429
+// Rate limiter — mín 6s entre chamadas + cooldown após 429
 let lastCall = 0;
 let cooldownUntil = 0;
 
-async function waitForSlot() {
-  // Se em cooldown por 429, espera
+/**
+ * Chamada principal — segue o padrão que funciona:
+ * - systemInstruction separado do contents
+ * - contents com mensagem curta
+ * - responseMimeType: application/json
+ */
+async function callGemini(systemPrompt, userMessage) {
+  const key = import.meta.env.VITE_GEMINI_KEY;
+  if (!key) return null;
+
+  // Cooldown check
   if (Date.now() < cooldownUntil) {
     const remaining = cooldownUntil - Date.now();
     throw new Error(`COOLDOWN:${Math.ceil(remaining / 1000)}`);
   }
+
+  // Rate limit — min 6s entre chamadas
   const now = Date.now();
-  const wait = Math.max(0, 10000 - (now - lastCall));
+  const wait = Math.max(0, 6000 - (now - lastCall));
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
   lastCall = Date.now();
-}
 
-// Retry com backoff em caso de 429
-async function callGemini(prompt, retries = 1) {
-  const key = import.meta.env.VITE_GEMINI_KEY;
-  if (!key) return null;
+  try {
+    const res = await fetch(`${BASE}/${MODEL}:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: userMessage }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.7,
+        },
+      }),
+    });
 
-  await waitForSlot();
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(`${BASE}/${MODEL}:generateContent?key=${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024, responseMimeType: 'application/json' },
-        }),
-      });
-
-      if (res.status === 429) {
-        // Set 60s cooldown — stop hammering the API
-        cooldownUntil = Date.now() + 60000;
-        console.warn('Rate limited. Cooldown 60s.');
-        return null;
-      }
-
-      if (!res.ok) {
-        console.error('API error:', res.status);
-        return null;
-      }
-
-      const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    } catch (e) {
-      console.error('Fetch error:', e.message);
-      if (attempt < retries) {
-        await new Promise(r => setTimeout(r, 3000));
-        continue;
-      }
+    if (res.status === 429) {
+      cooldownUntil = Date.now() + 60000;
+      console.warn('Rate limited. Cooldown 60s.');
       return null;
     }
+
+    if (!res.ok) {
+      console.error('Gemini API error:', res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch (e) {
+    console.error('Gemini fetch error:', e.message);
+    return null;
   }
-  return null;
 }
 
 function parseJSON(raw) {
@@ -103,11 +102,8 @@ export async function analyzeStocks(stocks) {
     `${s.ticker}: R$${Number(s.price).toFixed(2)} (${s.change >= 0 ? '+' : ''}${Number(s.change).toFixed(2)}%)`
   ).join('\n');
 
-  const prompt = `Você é um analista financeiro brasileiro. Analise estas ações da B3 com base nos dados de hoje:
-
-${stockData}
-
-Retorne um JSON com esta estrutura (sem markdown, só JSON):
+  const systemPrompt = `Você é um analista financeiro brasileiro especializado em B3.
+Retorne APENAS JSON com esta estrutura:
 {
   "analysis_date": "data de hoje",
   "market_summary": "resumo do mercado em 1-2 frases",
@@ -115,20 +111,17 @@ Retorne um JSON com esta estrutura (sem markdown, só JSON):
     {
       "ticker": "CÓDIGO",
       "sentiment": "bullish" | "neutral" | "bearish",
-      "reason": "análise em 2-3 frases considerando: variação do dia, setor, cenário macro brasileiro (Selic, câmbio, fiscal)",
+      "reason": "análise em 2-3 frases",
       "risk": "baixo" | "médio" | "alto"
     }
   ]
 }
+Regras: selecione 5 ações mais relevantes, seja objetivo, considere cenário macro brasileiro, português do Brasil.`;
 
-Regras:
-- Selecione as 5 ações mais relevantes
-- Seja objetivo e baseado em dados
-- Considere o cenário macro brasileiro atual
-- Responda em português do Brasil`;
+  const userMessage = `Analise estas ações da B3 hoje:\n${stockData}`;
 
   try {
-    const result = parseJSON(await callGemini(prompt));
+    const result = parseJSON(await callGemini(systemPrompt, userMessage));
     if (result) setCache(cacheKey, result);
     return result;
   } catch (e) {
@@ -145,20 +138,8 @@ export async function analyzeSpending(summary) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const prompt = `Você é um consultor financeiro pessoal brasileiro. Analise estes dados:
-
-Receita mensal: R$ ${summary.income}
-Despesa mensal: R$ ${summary.expense}
-Guardado em metas: R$ ${summary.saved}
-Disponível: R$ ${summary.available}
-
-Top categorias de gasto:
-${summary.topCategories?.map(c => `- ${c.name}: R$ ${c.value}`).join('\n') || 'Sem dados'}
-
-Tendências:
-${summary.trends?.map(t => `- ${t.category}: ${t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '→'} ${t.change}%`).join('\n') || 'Sem dados suficientes'}
-
-Retorne JSON:
+  const systemPrompt = `Você é um consultor financeiro pessoal brasileiro.
+Retorne APENAS JSON com esta estrutura:
 {
   "overall_health": "good" | "attention" | "critical",
   "score": 0-100,
@@ -166,11 +147,17 @@ Retorne JSON:
   "tips": ["dica 1", "dica 2", "dica 3"],
   "highlight": "o ponto mais importante para focar agora"
 }
-
 Seja prático e encorajador. Português do Brasil.`;
 
+  const userData = `Receita: R$ ${summary.income}
+Despesa: R$ ${summary.expense}
+Guardado: R$ ${summary.saved}
+Disponível: R$ ${summary.available}
+Top categorias: ${summary.topCategories?.map(c => `${c.name}: R$ ${c.value}`).join(', ') || 'Sem dados'}
+Tendências: ${summary.trends?.map(t => `${t.category}: ${t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '→'} ${t.change}%`).join(', ') || 'Sem dados'}`;
+
   try {
-    const result = parseJSON(await callGemini(prompt));
+    const result = parseJSON(await callGemini(systemPrompt, userData));
     if (result) setCache(cacheKey, result);
     return result;
   } catch (e) {

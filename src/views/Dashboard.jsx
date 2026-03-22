@@ -94,21 +94,26 @@ export default function Dashboard({ transactions, categories, goals, gamificatio
         </motion.div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {cards.map((c, i) => (
           <motion.div key={c.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
             className="stat-card relative overflow-hidden !p-3.5 sm:!p-5">
-            {/* Subtle glow */}
             <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl" style={{ background: c.color, opacity: 0.06 }} />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center" style={{ background: c.color + '12' }}>
-                  <c.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: c.color }} />
-                </div>
+            <div className="relative flex items-center gap-3 sm:block">
+              <div className="w-9 h-9 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 sm:hidden" style={{ background: c.color + '12' }}>
+                <c.icon className="w-4 h-4" style={{ color: c.color }} />
               </div>
-              <p className="text-base sm:text-xl lg:text-2xl font-extrabold font-mono tracking-tight truncate" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
-              <p className="text-[10px] sm:text-[11px] mt-1.5 sm:mt-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
+              <div className="flex-1 sm:block">
+                <div className="hidden sm:flex items-center justify-between mb-4">
+                  <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: c.color + '12' }}>
+                    <c.icon className="w-4 h-4" style={{ color: c.color }} />
+                  </div>
+                </div>
+                <span className="text-[10px] sm:hidden font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
+                <p className="text-lg sm:text-xl lg:text-2xl font-extrabold font-mono tracking-tight" style={{ color: c.color }}>{formatCurrency(c.value)}</p>
+                <p className="text-[10px] sm:text-[11px] mt-0.5 sm:mt-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
+              </div>
             </div>
           </motion.div>
         ))}

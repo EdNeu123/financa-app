@@ -153,10 +153,11 @@ export default function Home() {
               )},
               { num: '03', title: 'Evolua', desc: 'Insights com IA, projeções, conquistas e notificações mantêm você no controle.', svg: (
                 <svg viewBox="0 0 120 80" className="w-full h-20">
-                  <circle cx="60" cy="40" r="28" fill="none" stroke="var(--accent)" strokeWidth="1.5" opacity="0.2" />
-                  <path d="M60 15 A25 25 0 1 1 38 58" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
-                  <text x="60" y="44" textAnchor="middle" fill="var(--accent)" fontSize="14" fontWeight="700" opacity="0.5">85</text>
-                  <path d="M95 20 L100 15 L105 25" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+                  <circle cx="60" cy="40" r="25" fill="none" stroke="var(--accent)" strokeWidth="2" opacity="0.12" />
+                  <circle cx="60" cy="40" r="25" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" opacity="0.4"
+                    strokeDasharray={`${Math.PI * 50 * 0.75} ${Math.PI * 50 * 0.25}`} strokeDashoffset={Math.PI * 50 * 0.25}
+                    transform="rotate(-90 60 40)" />
+                  <text x="60" y="45" textAnchor="middle" fill="var(--accent)" fontSize="14" fontWeight="700" opacity="0.5">85</text>
                 </svg>
               )},
             ].map((step, i) => (
