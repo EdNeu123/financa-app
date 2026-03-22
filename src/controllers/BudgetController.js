@@ -6,9 +6,9 @@ export async function create(uid, raw, { count = 0, limit = 30 } = {}) {
   if(count >= limit) return {success:false,error:`Limite de ${limit} orçamentos no seu plano.${limit < 30 ? ' Faça upgrade para o Pro.' : ''}`};
   const cat = sanitizeString(raw.category,LIMITS.STRING_MAX_SHORT);
   if(!cat) return {success:false,error:'Categoria obrigatória'};
-  const limit = sanitizeAmount(raw.limitAmount);
-  if(!limit.valid) return {success:false,error:limit.error};
-  try { await Model.create(uid,{category:cat,limitAmount:limit.value,alertAt:raw.alertAt||80,enabled:true}); return {success:true}; }
+  const amt = sanitizeAmount(raw.limitAmount);
+  if(!amt.valid) return {success:false,error:amt.error};
+  try { await Model.create(uid,{category:cat,limitAmount:amt.value,alertAt:raw.alertAt||80,enabled:true}); return {success:true}; }
   catch(e) { console.error(e); return {success:false,error:'Erro ao criar limite'}; }
 }
 export async function update(id, raw) { if(!id) return {success:false,error:'ID inválido'}; try { await Model.update(id,raw); return {success:true}; } catch(e) { return {success:false,error:'Erro ao atualizar'}; } }
