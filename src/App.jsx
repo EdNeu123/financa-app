@@ -12,6 +12,7 @@ import { useRecurring } from './hooks/useRecurring';
 // Site pages (public)
 import SiteNav from './views/site/SiteNav';
 import SiteFooter from './views/site/SiteFooter';
+import ScrollToTop from './views/site/ScrollToTop';
 import Home from './views/site/Home';
 import Features from './views/site/Features';
 import Pricing from './views/site/Pricing';
@@ -149,6 +150,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Public site pages */}
         <Route path="/" element={user ? <Navigate to="/app" /> : <SiteWrapper><Home /></SiteWrapper>} />

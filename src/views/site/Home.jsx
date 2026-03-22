@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, ChevronRight, Brain, Users, TrendingUp, Shield, Star, Zap, Target, BarChart3 } from 'lucide-react';
+import { DashboardMockup, PhoneMockup } from './Visuals';
 
 const fade = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-40px' } };
 
@@ -61,6 +62,12 @@ export default function Home() {
               Sem cartão de crédito. Sem período de teste. Grátis de verdade.
             </p>
           </motion.div>
+
+          {/* Dashboard mockup */}
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }}
+            className="mt-16 md:mt-20">
+            <DashboardMockup />
+          </motion.div>
         </div>
       </section>
 
@@ -105,21 +112,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA final com escassez */}
+      {/* CTA final com escassez + visual */}
       <section className="py-20" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.div {...fade}>
-            <BarChart3 className="w-10 h-10 mx-auto mb-4" style={{ color: 'var(--accent)' }} />
-            <h2 className="text-3xl md:text-4xl font-extrabold font-display mb-3">
-              Enquanto você pensa, seu dinheiro não espera.
-            </h2>
-            <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              Cada dia sem controle é um dia que seus gastos decidem por você. Comece agora — é grátis.
-            </p>
-            <Link to="/entrar" className="btn-primary text-base px-10 py-4 inline-flex items-center gap-2">
-              Criar minha conta <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="hidden md:block"><PhoneMockup /></div>
+            <motion.div {...fade} className="flex-1 text-center md:text-left">
+              <BarChart3 className="w-10 h-10 mb-4 md:mx-0 mx-auto" style={{ color: 'var(--accent)' }} />
+              <h2 className="text-3xl md:text-4xl font-extrabold font-display mb-3">
+                Enquanto você pensa,<br />seu dinheiro não espera.
+              </h2>
+              <p className="text-base mb-8 max-w-lg" style={{ color: 'var(--text-secondary)' }}>
+                Cada dia sem controle é um dia que seus gastos decidem por você. Comece agora — é grátis.
+              </p>
+              <Link to="/entrar" className="btn-primary text-base px-10 py-4 inline-flex items-center gap-2">
+                Criar minha conta <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
     </div>

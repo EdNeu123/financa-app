@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Target, Shield, Zap, Heart, ArrowRight } from 'lucide-react';
+import { FloatingStats } from './Visuals';
 
 const fade = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true } };
 
@@ -59,6 +60,11 @@ export default function About() {
                 quanto entrou, quanto saiu, quanto está guardado, e quanto está disponível.
               </p>
             </div>
+          </motion.div>
+
+          {/* Visual: floating stat cards */}
+          <motion.div {...fade} className="my-8">
+            <FloatingStats />
           </motion.div>
         </div>
       </section>

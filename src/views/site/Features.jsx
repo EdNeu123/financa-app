@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BarChart3, Brain, Target, Bell, Trophy, LineChart, Sparkles, Repeat, Shield, BookOpen, Lock, Award, ArrowRight, Check } from 'lucide-react';
+import { DashboardMockup } from './Visuals';
 
 const fade = { initial:{opacity:0,y:20}, whileInView:{opacity:1,y:0}, viewport:{once:true,margin:'-40px'} };
 
@@ -51,6 +52,11 @@ export default function Features() {
               </motion.div>
             ))}
           </div>
+
+          {/* Visual do produto */}
+          <motion.div {...fade} className="mt-16">
+            <DashboardMockup />
+          </motion.div>
         </div>
       </section>
 
