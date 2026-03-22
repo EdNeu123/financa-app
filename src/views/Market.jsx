@@ -50,20 +50,38 @@ export default function Market({ userPlan }) {
     const token = import.meta.env.VITE_BRAPI_TOKEN || '';
     if (!token) { setError('As cotações em tempo real precisam ser configuradas pelo administrador. Consulte a documentação.'); setLoading(false); return; }
     try {
-      const res = await fetch(`https://brapi.dev/api/quote/${TRACKED.join(',')}?token=${token}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.results?.length) {
-        const mapped = data.results.map(s => ({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow }));
-        setStocks(mapped);
+      // Fetch each stock individually (free tier = 1 per request)
+      const results = [];
+      for (const ticker of TRACKED) {
+        try {
+          const res = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${token}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results?.[0]) {
+              const s = data.results[0];
+              results.push({ ticker:s.symbol, name:s.shortName||s.longName||s.symbol, price:s.regularMarketPrice, change:s.regularMarketChangePercent, high:s.regularMarketDayHigh, low:s.regularMarketDayLow });
+            }
+          }
+          // Small delay to respect rate limits
+          await new Promise(r => setTimeout(r, 300));
+        } catch {}
       }
-      try { const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}`); if(ir.ok){const ib=await ir.json();if(ib.results?.[0])setIbov({price:ib.results[0].regularMarketPrice,change:ib.results[0].regularMarketChangePercent});} } catch{}
-      setLastUpdate(new Date());
+      if (results.length > 0) setStocks(results);
+
+      // Fetch IBOV
+      try {
+        await new Promise(r => setTimeout(r, 300));
+        const ir = await fetch(`https://brapi.dev/api/quote/%5EBVSP?token=${token}`);
+        if(ir.ok){const ib=await ir.json();if(ib.results?.[0])setIbov({price:ib.results[0].regularMarketPrice,change:ib.results[0].regularMarketChangePercent});}
+      } catch{}
+
+      if (results.length === 0) setError('Nenhuma cotação carregada. Verifique o token da API.');
+      else setLastUpdate(new Date());
     } catch(e) { console.error(e); setError('Falha ao carregar cotações. Verifique seu token e conexão.'); }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); const iv=setInterval(fetchData,120000); return()=>clearInterval(iv); }, [fetchData]);
+  useEffect(() => { fetchData(); const iv=setInterval(fetchData,300000); return()=>clearInterval(iv); }, [fetchData]); // 5min (11 requests per cycle)
 
   const sC={bullish:'#10b981',bearish:'#ef4444',neutral:'#f59e0b'};
   const sL={bullish:'Alta',bearish:'Baixa',neutral:'Neutro'};
